@@ -11,9 +11,9 @@
 
 ---
 
-The hardest part of long-horizon tasks is not deciding the next action. It is making every failed attempt useful for what comes after. 
+Long-horizon interactive tasks remain difficult for language models because useful experience does not fit neatly into a finite context window. We introduced Continual Harness to address this problem through automated trajectory distillation and harness self-improvement.
 
-Continual Harness is a reset-free, self-improving agentic harness built around this principle. It enables a foundation model to store memories, write reusable skills, deploy subagents, and refine its own prompt during interactive tasks. On Pokémon Red and Emerald, Continual Harness started from scratch with no prior memory, hand-crafted tools, or domain-specific scaffolding, and completed early-to-mid milestones of both games with comparative efficiency to the hand-crafted harness. 
+Continual Harness is a reset-free, self-improving agentic harness that enables a foundation model to store memories, write reusable skills, deploy subagents, and refine its own prompt during interactive tasks. On Pokémon Red and Emerald, Continual Harness started from scratch with no prior memory, hand-crafted tools, or domain-specific scaffolding, and completed early-to-mid milestones of both games with comparative efficiency to the hand-crafted harness. 
 
 This raises two natural questions:
 
