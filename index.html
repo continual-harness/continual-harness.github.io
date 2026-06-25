@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Continual Harness — Toward Cost-Efficient Embodied Agents on ARC-AGI-3</title>
+<meta name="description" content="Continual Harness: a reset-free, self-refining harness for embodied agents on ARC-AGI-3.">
+
+<!-- KaTeX stylesheet (pinned + SRI); fonts resolve from the same CDN path. -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+      integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
+      crossorigin="anonymous">
+
+<!-- Type: Playfair Display (titles) + Roboto (body text) + Spectral (author byline).
+     System fallbacks keep the page legible if the font CDN is blocked. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Roboto:ital,wght@0,400;0,500;0,700;1,400&family=Spectral:ital,wght@0,500;0,600;1,400&display=swap">
+<link rel="stylesheet" href="style.css?v=14">
+</head>
+<body>
+<main id="content" class="content">
+  <p class="status">Loading…</p>
+</main>
+
+<!-- Markdown + math renderers (pinned + SRI). app.js wires the custom math
+     extension and fills the data-embed anchors. -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"
+        integrity="sha384-/TQbtLCAerC3jgaim+N78RZSDYV7ryeoBCVqTuzRrFec2akfBkHS7ACQ3PQhvMVi"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+        integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"
+        crossorigin="anonymous"></script>
+<!-- ?v=N: bump on every app.js/figure edit so browsers fetch fresh assets
+     instead of a stale cached app.js (only the markdown is fetched no-cache). -->
+<script src="app.js?v=7"></script>
+</body>
+</html>

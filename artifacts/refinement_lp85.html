@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Continual Harness — lp85 refinement timeline</title>
+<style>
+:root{
+  --ink:#211c15; --body:#3c352b; --muted:#8d8472; --line:#dcd2bf;
+  --blue:#2b5d8a; --violet:#7c5cc4; --green:#2e7d46; --over:#b91c1c; --stag:#b45309;
+  --green-bg:#e7efe1; --over-bg:#f6e7e1; --stag-bg:#f6ecd6;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#f4f0e7;color:var(--body);font-size:15px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+.wrap{max-width:none;margin:0 auto;padding:22px 22px 12px;}
+.title{font-size:25px;font-weight:800;color:var(--ink);letter-spacing:-.3px;}
+.thesis{font-size:15.5px;line-height:1.55;color:#5a5446;margin:9px 0 16px;}
+
+.levels{background:#fbf8f1;border:1px solid var(--line);border-radius:11px;padding:14px 17px;
+  margin-bottom:20px;box-shadow:0 1px 2px rgba(60,40,20,.05);}
+.levels-head{font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+  font-weight:700;margin-bottom:10px;}
+.lv-row{display:flex;align-items:center;gap:13px;margin:6px 0;}
+.lv-name{flex:0 0 74px;font-size:14px;color:#4a4232;font-weight:600;}
+.lv-track{flex:1;height:15px;background:#e7dfce;border-radius:8px;overflow:hidden;}
+.lv-fill{display:block;height:100%;background:var(--blue);border-radius:8px;}
+.lv-fill.cheap{background:var(--green);}
+.lv-num{flex:0 0 104px;text-align:right;font-size:13.5px;color:var(--muted);font-family:var(--mono);}
+
+.ms{display:grid;grid-template-columns:28px 1fr;gap:15px;}
+.ms-rail{position:relative;display:flex;justify-content:center;}
+.ms-rail::before{content:"";position:absolute;top:0;bottom:-2px;width:2px;background:var(--line);}
+.ms:last-child .ms-rail::before{bottom:auto;height:22px;}
+.dot{position:relative;z-index:1;width:15px;height:15px;border-radius:50%;margin-top:5px;
+  border:3px solid #fbf8f1;box-shadow:0 0 0 1px var(--line);}
+.k-up .dot{background:var(--green);} .k-over .dot{background:var(--over);}
+.k-stag .dot{background:var(--stag);}
+.ms-body{background:#fbf8f1;border:1px solid var(--line);border-radius:11px;padding:14px 17px;
+  margin-bottom:16px;box-shadow:0 1px 2px rgba(60,40,20,.05);}
+.k-up .ms-body{border-left:3px solid var(--green);}
+.k-over .ms-body{border-left:3px solid var(--over);}
+.k-stag .ms-body{border-left:3px solid var(--stag);}
+
+.ms-meta{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:6px;}
+.lvbadge{font-size:13px;font-weight:700;color:var(--ink);background:#efe9db;border-radius:6px;
+  padding:2px 10px;}
+.kind{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  border-radius:11px;padding:2px 10px;}
+.kind.k-up{color:var(--green);background:var(--green-bg);}
+.kind.k-over{color:var(--over);background:var(--over-bg);}
+.kind.k-stag{color:var(--stag);background:var(--stag-bg);}
+.act{font-size:13px;color:var(--muted);font-family:var(--mono);}
+.ms-head{font-size:19px;font-weight:700;color:var(--ink);margin:2px 0 5px;}
+.ms-detail{font-size:15px;line-height:1.5;color:#544c3d;margin-bottom:10px;}
+
+.raw-evo{margin:5px 0 12px;}
+.raw-evo-head{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);
+  font-weight:700;margin-bottom:5px;}
+.raw-passes{margin-left:8px;text-transform:none;letter-spacing:0;font-weight:600;color:#a0987f;}
+.raw-evo-body{font-family:var(--mono);font-size:12.5px;line-height:1.5;background:#f6f1e6;
+  border:1px solid #e7dfce;border-radius:7px;padding:10px 13px;max-height:320px;overflow:auto;
+  white-space:pre-wrap;word-break:break-word;color:#43412f;margin:0;}
+
+.evo{margin:4px 0 2px;}
+.evo-head{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);
+  font-weight:700;margin-bottom:5px;}
+.evo-body{font-family:var(--mono);font-size:12.5px;line-height:1.5;background:#f6f1e6;
+  border:1px solid #e7dfce;border-radius:7px;padding:10px 13px;max-height:260px;overflow:auto;
+  white-space:normal;color:#4a4232;}
+.evo-body span{display:block;white-space:pre-wrap;word-break:break-word;}
+.evo-body span.add{background:#e6efdd;border-left:3px solid var(--green);
+  padding-left:7px;margin-left:-9px;}
+.evo-body span.blank{min-height:.8em;}
+
+.produced{margin-top:11px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.produced .arrow{font-size:12.5px;color:var(--muted);font-weight:600;}
+code.skill{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--violet);
+  background:#efe9f7;border-radius:6px;padding:2px 8px;}
+
+.outcome{margin-top:6px;background:var(--green-bg);border:1px solid #cbdcb6;border-radius:11px;
+  padding:15px 18px;font-size:15.5px;line-height:1.55;color:#1f4731;}
+.outcome b{color:#163a26;}
+</style></head>
+<body><div class="wrap">
+  <div class="title">lp85 — each failure is refined into reusable state</div>
+  <p class="thesis">Continual Harness starts slower than the baseline, but every game-over and stagnation is turned into a policy rewrite plus an executable skill. Each card shows the evolver&#x27;s original trace output plus the accepted rewritten policy. Once the method is compiled, the late levels clear at a fraction of the cost.</p>
+  <div class="levels"><div class="levels-head">actions spent per level</div><div class="lv-row"><span class="lv-name">level 1</span><span class="lv-track"><span class="lv-fill cheap" style="width:10.1%"></span></span><span class="lv-num">15 actions</span></div><div class="lv-row"><span class="lv-name">level 2</span><span class="lv-track"><span class="lv-fill" style="width:100.0%"></span></span><span class="lv-num">148 actions</span></div><div class="lv-row"><span class="lv-name">level 3</span><span class="lv-track"><span class="lv-fill" style="width:54.1%"></span></span><span class="lv-num">80 actions</span></div><div class="lv-row"><span class="lv-name">level 4</span><span class="lv-track"><span class="lv-fill cheap" style="width:9.5%"></span></span><span class="lv-num">14 actions</span></div><div class="lv-row"><span class="lv-name">level 5</span><span class="lv-track"><span class="lv-fill cheap" style="width:14.2%"></span></span><span class="lv-num">21 actions</span></div><div class="lv-row"><span class="lv-name">level 6</span><span class="lv-track"><span class="lv-fill cheap" style="width:14.9%"></span></span><span class="lv-num">22 actions</span></div><div class="lv-row"><span class="lv-name">level 7</span><span class="lv-track"><span class="lv-fill cheap" style="width:7.4%"></span></span><span class="lv-num">11 actions</span></div><div class="lv-row"><span class="lv-name">level 8</span><span class="lv-track"><span class="lv-fill cheap" style="width:23.0%"></span></span><span class="lv-num">34 actions</span></div></div>
+  <div class="timeline">
+    <div class="ms k-up"><div class="ms-rail"><span class="dot"></span></div><div class="ms-body"><div class="ms-meta"><span class="lvbadge">level 1</span><span class="kind k-up">level-up</span><span class="act">action 15</span></div><div class="ms-head">First rule written into the policy</div><div class="ms-detail">Arrows rotate the loop; solid 2×2 blocks go into matching hollow cursors.</div><div class="raw-evo"><div class="raw-evo-head">original harness evolution output <span class="raw-passes">prompt / skills / subagents / memory</span></div><pre class="raw-evo-body">[generation 1 · prompt pass]
+# IMPROVED BASE PROMPT
+
+# STRATEGIC GUIDANCE
+
+## Discovered Game Rules
+- **Core Goal (Confidence 5/5):** The objective is to rotate the loop(s) of blocks until the solid colored target block(s) land exactly inside the hollow cursor(s) of the matching color (e.g., moving the solid yellow block into the yellow hollow cursor). Matching the block to the cursor solves the level.
+- **Movement Mechanics (Confidence 5/5):** Clicking (`ACTION6`) on the colored arrow buttons (e.g., green or red arrows) rotates the adjacent loop of blocks one step (clockwise or counter-clockwise). The game pieces are entirely driven by clicking these arrows.
+- **Open Hypothesis (Confidence 2/5):** As levels progress (like Level 1), the game introduces multiple, intersecting loops. It is currently unconfirmed how intersection points behave. Do blocks transfer between loops, or does one loop&#x27;s rotation displace the other&#x27;s blocks? Test this interaction carefully.
+
+## Play Strategy
+- **Analyze the Layout First:** At the start of a level, identify all arrows, loops, solid target blocks, and hollow cursors. Programmatically or visually map the sequence of rotations needed.
+- **Efficient Execution:** Use `ACTION6` to click the arrows. Once you know the path, you can submit a short batch of clicks to perform multiple rotations at once. However, keep sequences short when moving blocks through unverified intersections.
+- **Valid Actions Only:** Always check `state.latest_frame.available_actions`. If only `ACTION6` is permitted, do not submit invalid actions like `ACTION5` (Enter/Space), as they will be rejected and waste the step.
+
+## Skill &amp; Tool Development Lessons
+- **Dynamically Locate Objects:** **Do NOT hardcode coordinates** (e.g., `top_y = 19`) in your skills. Level layouts change completely between levels. Write scripts that scan the grid for target shapes (like the arrows or hollow cursors) and map the loops dynamically based on grid connections.
+- **Respect Sandbox Restrictions:** Do NOT attempt to write &quot;eval_python&quot; skills using `exec()` or `eval()`. Dynamic code execution is strictly banned in the sandbox and will throw an error. Write concrete, safe analysis scripts instead.
+- **Leverage Image Feedback:** Use the provided grid states and rendered hex arrays to write tools that track exactly which blocks move during a rotation.
+
+[generation 1 · skills pass]
+{
+  &quot;analysis&quot;: &quot;Deleted &#x27;eval_python&#x27; (skill_002) because it relies on the &#x27;exec&#x27; function which violates the sandbox policy, and the agent can natively run arbitrary code by creating new temporary skills.&quot;,
+  &quot;add&quot;: [],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: [
+    &quot;skill_002&quot;
+  ]
+}
+
+[generation 1 · subagents pass]
+{
+  &quot;analysis&quot;: &quot;The orchestrator spent over 10 turns iteratively writing, running, and refining a Python skill (fixing coordinates and offsets) to extract the state of the loop. I added a &#x27;build_skill&#x27; subagent to encapsulate this repetitive code-test-debug cycle, freeing the orchestrator to focus on gameplay strategy.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;name&quot;: &quot;build_skill&quot;,
+      &quot;description&quot;: &quot;Iteratively writes, tests, and refines a Python skill to extract specific visual/logical information from the game grid.&quot;,
+      &quot;system_instructions&quot;: &quot;You are an expert Python coder specializing in grid analysis. Your task is to create or update a skill using `process_skill`, then test it with `run_skill`. You will likely need to adjust coordinates, offsets, and array indices based on the test results. Iterate until the script correctly and robustly extracts the requested information from `state.latest_frame.frame`. When the skill works perfectly, call subagent_return(answer, status=&#x27;success&#x27;) with the skill ID and a summary of its output.&quot;,
+      &quot;directive&quot;: &quot;Write and refine a skill to fulfill the user&#x27;s data extraction request.&quot;,
+      &quot;return_condition&quot;: &quot;Return when the skill runs without errors and produces the correct logical representation of the target grid elements.&quot;,
+      &quot;handler_type&quot;: &quot;looping&quot;,
+      &quot;max_turns&quot;: 15,
+      &quot;allowed_tools&quot;: [
+        &quot;process_skill&quot;,
+        &quot;run_skill&quot;
+      ],
+      &quot;tags&quot;: [
+        &quot;coding&quot;,
+        &quot;analysis&quot;
+      ]
+    }
+  ],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: []
+}
+
+[generation 1 · memory pass]
+```json
+{
+  &quot;analysis&quot;: &quot;The trajectory shows the agent successfully scoring a point and triggering a level change (score 0-&gt;1) by rotating the loop until the solid yellow block moved inside the yellow hollow cursor. Image 2 reveals that the next level has a different layout with multiple interconnected loops and multiple pairs of arrows. I am adding the confirmed scoring mechanic to memory and updating the initial layout memory to note that it specifically describes Level 1.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;title&quot;: &quot;Scoring Mechanic&quot;,
+      &quot;body&quot;: &quot;To score a point and fill one of the top progress dashes, use the red and green arrows to rotate the loops until a solid colored block is moved inside a matching hollow cursor (e.g., solid yellow block into the hollow yellow cursor).&quot;,
+      &quot;tags&quot;: [&quot;rule&quot;, &quot;mechanics&quot;],
+      &quot;confidence&quot;: 5
+    }
+  ],
+  &quot;edit&quot;: [
+    {
+      &quot;id&quot;: &quot;mem_001&quot;,
+      &quot;body&quot;: &quot;Level 1 features a single loop of 20 4x4 blocks. A green arrow rotates the loop clockwise; a red arrow rotates it counter-clockwise. A yellow hollow cursor surrounds the top-left block, and one solid yellow block exists. Higher levels feature multiple interconnected loops and arrow pairs. Progress is tracked by 7 dashes at the top.&quot;,
+      &quot;confidence&quot;: 5,
+      &quot;title&quot;: &quot;Level Layouts and Controls&quot;,
+      &quot;tags&quot;: [&quot;layout&quot;, &quot;mechanics&quot;]
+    }
+  ],
+  &quot;delete&quot;: []
+}
+```</pre></div><div class="evo"><div class="evo-head">accepted rewritten policy (new lines highlighted)</div><pre class="evo-body"><span class="add"># IMPROVED BASE PROMPT</span><span class="blank"></span><span># STRATEGIC GUIDANCE</span><span class="blank"></span><span class="add">## Discovered Game Rules</span><span class="add">- **Core Goal (Confidence 5/5):** The objective is to rotate the loop(s) of blocks until the solid colored target block(s) land exactly inside the hollow cursor(s) of the matching color (e.g., moving the solid yellow block into the yellow hollow cursor). Matching the block to the cursor solves the level.</span><span class="add">- **Movement Mechanics (Confidence 5/5):** Clicking (`ACTION6`) on the colored arrow buttons (e.g., green or red arrows) rotates the adjacent loop of blocks one step (clockwise or counter-clockwise). The game pieces are entirely driven by clicking these arrows.</span><span class="add">- **Open Hypothesis (Confidence 2/5):** As levels progress (like Level 1), the game introduces multiple, intersecting loops. It is currently unconfirmed how intersection points behave. Do blocks transfer between loops, or does one loop&#x27;s rotation displace the other&#x27;s blocks? Test this interaction carefully.</span><span class="blank"></span><span>## Play Strategy</span><span class="add">- **Analyze the Layout First:** At the start of a level, identify all arrows, loops, solid target blocks, and hollow cursors. Programmatically or visually map the sequence of rotations needed.</span><span class="add">- **Efficient Execution:** Use `ACTION6` to click the arrows. Once you know the path, you can submit a short batch of clicks to perform multiple rotations at once. However, keep sequences short when moving blocks through unverified intersections.</span><span class="add">- **Valid Actions Only:** Always check `state.latest_frame.available_actions`. If only `ACTION6` is permitted, do not submit invalid actions like `ACTION5` (Enter/Space), as they will be rejected and waste the step.</span><span class="blank"></span><span class="add">## Skill &amp; Tool Development Lessons</span><span class="add">- **Dynamically Locate Objects:** **Do NOT hardcode coordinates** (e.g., `top_y = 19`) in your skills. Level layouts change completely between levels. Write scripts that scan the grid for target shapes (like the arrows or hollow cursors) and map the loops dynamically based on grid connections.</span><span class="add">- **Respect Sandbox Restrictions:** Do NOT attempt to write &quot;eval_python&quot; skills using `exec()` or `eval()`. Dynamic code execution is strictly banned in the sandbox and will throw an error. Write concrete, safe analysis scripts instead.</span><span class="add">- **Leverage Image Feedback:** Use the provided grid states and rendered hex arrays to write tools that track exactly which blocks move during a rotation.</span></pre></div></div></div><div class="ms k-over"><div class="ms-rail"><span class="dot"></span></div><div class="ms-body"><div class="ms-meta"><span class="lvbadge">level 2</span><span class="kind k-over">game-over</span><span class="act">action 77</span></div><div class="ms-head">Simulate before committing actions</div><div class="ms-detail">A game-over adds: simulate offline and respect the action budget first.</div><div class="raw-evo"><div class="raw-evo-head">original harness evolution output <span class="raw-passes">prompt / skills / subagents / memory</span></div><pre class="raw-evo-body">[generation 2 · prompt pass]
+# IMPROVED BASE PROMPT
+
+# STRATEGIC GUIDANCE
+
+## Discovered Game Rules
+- **Core Goal &amp; Scoring (Confidence 5/5):** The objective is to rotate the loops of blocks until the solid colored target block(s) land exactly inside the hollow cursor(s) of the matching color (e.g., placing the solid yellow block into the hollow yellow cursor). Matching all target blocks to their cursors scores a point (fills a dash at the top of the screen) and solves the level.
+- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on the colored arrow buttons (e.g., green or red arrows) rotates the adjacent loop of blocks one step clockwise or counter-clockwise. The entire game is driven by these arrow clicks.
+- **Strict Action Limit (Confidence 5/5):** Levels have a hard action cap. Exceeding this limit immediately triggers a `GAME_OVER`. Every single action counts—you must find the optimal path and absolutely avoid burning actions on aimless exploration, long unverified sequences, or infinite loops.
+- **Intersection Mechanics (Confidence 4/5):** On levels with multiple intersecting tracks (like Level 2), blocks located at the intersection points belong to both intersecting loops. You can transfer a block from one loop to another by moving it onto the intersection and then rotating the perpendicular loop.
+- **Open Hypothesis (Confidence 2/5):** As levels progress past Level 2, new obstacles, tracks of different shapes, or complex overlapping cursors might be introduced. It is currently unconfirmed if different colored blocks can block each other or overlap on the same track. 
+
+## Play Strategy
+- **Simulate Offline Before Executing:** Because of the strict action cap, you MUST find the shortest possible sequence of moves mathematically before committing to actions. Build a Python skill that parses the board into tracks (lists of coordinates) and simulates arrow clicks as array shifts (permutations). Use a breadth-first search (BFS) to find the shortest path to the target state.
+- **Execute Carefully from the Main Prompt:** Do NOT let your solver skills blindly execute long sequences of actions inline using `tools.take_actions()`. If the internal simulation desyncs from the actual game state, the skill will repeatedly execute flawed moves and rapidly drain your action limit, causing a Game Over. Instead, have your solver skill `print()` or `result` the optimal list of coordinate clicks, and then submit them yourself from the main agent in short, verifiable batches (3-5 actions at a time).
+- **Use Intersecting Tracks as Storage Buffers:** When multiple target blocks share the same track, they must be spaced apart by an exact distance to simultaneously land on their cursors. Use the perpendicular intersecting tracks to temporarily &quot;park&quot; one block. This allows you to rotate the primary track to adjust the distance between the blocks before bringing the parked block back in.
+
+## Skill &amp; Tool Development Lessons
+- **Dynamic Parsing:** Do not hardcode track or cursor coordinates. Grid states change drastically between levels. Write scripts to dynamically scan the hex grid for arrows (colors `8` and `e`), solid 2x2 blocks, and hollow cursors to construct the track graphs.
+- **Perfect Sandbox Modeling:** Your approach of extracting track positions (e.g., `V_pos`, `M_pos`) and mapping actions to cyclic permutations (e.g., `apply_shift(V_pos, 1)`) is proven and highly successful. Reuse this mathematical modeling for future levels to build fast, accurate offline puzzle solvers without risking game actions.
+
+[generation 2 · skills pass]
+{
+  &quot;analysis&quot;: &quot;The previous `solve_level_2` skill used inline action execution to explore the state space (testing and reversing moves), which exhausted the game&#x27;s turn limit and caused a GAME_OVER at step 76. I replaced `skill_006` with a purely offline permutation-based BFS that uses the hardcoded loop tracks discovered by `debug_solver`. This finds the shortest path without consuming any in-game turns, then executes only the correct solution sequence. I also deleted `skill_007` (debug_solver) as its logic is now fully integrated into the solver.&quot;,
+  &quot;add&quot;: [],
+  &quot;edit&quot;: [
+    {
+      &quot;id&quot;: &quot;skill_006&quot;,
+      &quot;name&quot;: &quot;solve_level_2&quot;,
+      &quot;description&quot;: &quot;Uses purely offline permutation BFS to find the shortest path for Level 2 and executes it, avoiding turn exhaustion.&quot;,
+      &quot;code&quot;: &quot;grid = state.latest_frame.frame[-1]\n\nblocks = []\nfor y in range(len(grid)-1):\n    for x in range(len(grid[y])-1):\n        c = grid[y][x]\n        if c not in \&quot;0348e\&quot;:\n            if grid[y][x+1] == c and grid[y+1][x] == c and grid[y+1][x+1] == c:\n                blocks.append((x, y, c))\n                \ncursors = []\nfor y in range(len(grid)-3):\n    for x in range(len(grid[y])-3):\n        c = grid[y][x]\n        if c not in \&quot;0348e\&quot;:\n            if grid[y][x+3] == c and grid[y+3][x] == c and grid[y+3][x+3] == c:\n                cursors.append((x+1, y+1, c))\n                \nV_pos = [\n    (23,17), (26,17), (29,17), (32,17), (35,17),\n    (35,20), (35,23), (35,26), (35,29), (35,32), (35,35), (35,38), (35,41), (35,44),\n    (32,44), (29,44), (26,44), (23,44),\n    (23,41), (23,38), (23,35), (23,32), (23,29), (23,26), (23,23), (23,20)\n]\nM_pos = [(17,26), (20,26), (23,26), (26,26), (29,26), (32,26), (35,26), (38,26), (41,26), (44,26)]\nB_pos = [(17,35), (20,35), (23,35), (26,35), (29,35), (32,35), (35,35), (38,35), (41,35), (44,35)]\n\ndef apply_shift(pos_list, shift):\n    perm = {}\n    for i, p in enumerate(pos_list):\n        perm[p] = pos_list[(i + shift) % len(pos_list)]\n    return perm\n\naction_perms = {\n    (20, 17): apply_shift(V_pos, -1),\n    (39, 17): apply_shift(V_pos, 1),\n    (14, 26): apply_shift(M_pos, -1),\n    (48, 26): apply_shift(M_pos, 1),\n    (14, 35): apply_shift(B_pos, -1),\n    (48, 35): apply_shift(B_pos, 1)\n}\n\ntarget_colors = {c for x, y, c in cursors}\nstart_state = tuple(sorted([(x, y, c) for x, y, c in blocks if c in target_colors]))\ntarget_state = tuple(sorted(cursors))\n\nprint(\&quot;Start state:\&quot;, start_state)\nprint(\&quot;Target state:\&quot;, target_state)\n\nresult = None\nif start_state == target_state:\n    print(\&quot;Already at target.\&quot;)\n    result = {\&quot;solved\&quot;: True, \&quot;path\&quot;: []}\nelse:\n    def get_next(st, act):\n        perm = action_perms[act]\n        nxt = []\n        for x, y, c in st:\n            nx, ny = perm.get((x, y), (x, y))\n            nxt.append((nx, ny, c))\n        return tuple(sorted(nxt))\n        \n    queue = collections.deque([(start_state, [])])\n    visited = {start_state}\n    \n    solution_path = None\n    nodes = 0\n    while queue:\n        curr, path = queue.popleft()\n        nodes += 1\n        \n        if curr == target_state:\n            solution_path = path\n            break\n            \n        if len(path) &gt; 30:\n            continue\n            \n        for act in action_perms:\n            nxt = get_next(curr, act)\n            if nxt not in visited:\n                visited.add(nxt)\n                queue.append((nxt, path + [act]))\n                \n    if solution_path is not None:\n        print(f\&quot;Solved in {len(solution_path)} steps (explored {nodes} nodes): {solution_path}\&quot;)\n        actions = [{\&quot;name\&quot;: \&quot;ACTION6\&quot;, \&quot;x\&quot;: x, \&quot;y\&quot;: y} for x, y in solution_path]\n        res = tools.take_actions(actions=actions)\n        result = {\&quot;solved\&quot;: True, \&quot;path\&quot;: solution_path, \&quot;result\&quot;: res}\n    else:\n        print(f\&quot;No solution found after exploring {nodes} nodes!\&quot;)\n        result = {\&quot;solved\&quot;: False}\n&quot;
+    }
+  ],
+  &quot;delete&quot;: [
+    &quot;skill_007&quot;
+  ]
+}
+
+[generation 2 · subagents pass]
+{
+  &quot;analysis&quot;: &quot;The orchestrator manually explored arrow mechanics one step at a time (steps 15-17) and manually managed complex solver/BFS script development (solve_level_2, debug_solver) instead of delegating to a subagent. I added &#x27;explore_mechanics&#x27; to own systematic physical testing and documentation of game elements, and expanded &#x27;build_skill&#x27; to explicitly include writing programmatic solvers and simulation algorithms.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;name&quot;: &quot;explore_mechanics&quot;,
+      &quot;description&quot;: &quot;Systematically explores the action space by interacting with game elements and observing results to discover mechanics and rules.&quot;,
+      &quot;system_instructions&quot;: &quot;You are an exploratory subagent. Your task is to test unknown game elements (like arrows, buttons, or blocks) by using the take_actions tool for short experiments. After each action, analyze how the game grid changed. Use process_memory to document your findings about what each action does, how objects move, and any rules you discover. You must call subagent_return(findings, status) to return control once you have mapped out the mechanics, or immediately if you encounter a level change, a terminal state (like GAME_OVER), or uncertain results.&quot;,
+      &quot;directive&quot;: &quot;Test the specified game actions/elements and document their behavior.&quot;,
+      &quot;return_condition&quot;: &quot;Return when the mechanics are fully documented or upon terminal states, level changes, or uncertain results.&quot;,
+      &quot;handler_type&quot;: &quot;looping&quot;,
+      &quot;max_turns&quot;: 15,
+      &quot;allowed_tools&quot;: [
+        &quot;take_actions&quot;,
+        &quot;process_memory&quot;
+      ],
+      &quot;tags&quot;: [
+        &quot;exploration&quot;,
+        &quot;mechanics&quot;
+      ]
+    }
+  ],
+  &quot;edit&quot;: [
+    {
+      &quot;id&quot;: &quot;subagent_001&quot;,
+      &quot;system_instructions&quot;: &quot;You are a skilled Python programmer agent. Your job is to iteratively write, test, and refine Python skills using process_skill and run_skill. You should build scripts not only to extract visual/logical grid information, but also to write programmatic solvers, search algorithms (like BFS), or state simulators. Read any errors or unexpected outputs, refine the code, and test again. Call subagent_return(skill_info, status) when the script works reliably.&quot;,
+      &quot;directive&quot;: &quot;Write and refine the requested Python skill until it succeeds.&quot;,
+      &quot;handler_type&quot;: &quot;looping&quot;,
+      &quot;max_turns&quot;: 15,
+      &quot;allowed_tools&quot;: [
+        &quot;process_skill&quot;,
+        &quot;run_skill&quot;
+      ],
+      &quot;description&quot;: &quot;Iteratively writes, tests, and refines a Python skill to extract grid data, map mechanics, or programmatically solve levels via search algorithms.&quot;
+    }
+  ],
+  &quot;delete&quot;: []
+}
+
+[generation 2 · memory pass]
+```json
+{
+  &quot;analysis&quot;: &quot;The trajectory shows the agent reaching a GAME_OVER state precisely on its 60th valid move in Level 2. Grid changes reveal a pixel at x=0 changing color (14 to 5) with y increasing downwards on every valid move, acting as a visual move limit counter. Since this strict constraint is absent from memory, the agent planned overly long action sequences that exceeded the limit.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;title&quot;: &quot;Move Limit Counter&quot;,
+      &quot;body&quot;: &quot;Levels have a strict move limit (e.g., 60 moves). This is visually tracked by a vertical line drawing downwards on the far left edge of the grid (x=0), where a pixel changes color (e.g., 14 to 5) for every valid move. Exceeding this limit before solving the level results in an immediate GAME_OVER.&quot;,
+      &quot;tags&quot;: [&quot;rule&quot;, &quot;mechanics&quot;, &quot;constraints&quot;],
+      &quot;confidence&quot;: 5
+    }
+  ],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: []
+}
+```</pre></div><div class="evo"><div class="evo-head">accepted rewritten policy (new lines highlighted)</div><pre class="evo-body"><span># IMPROVED BASE PROMPT</span><span class="blank"></span><span># STRATEGIC GUIDANCE</span><span class="blank"></span><span>## Discovered Game Rules</span><span class="add">- **Core Goal &amp; Scoring (Confidence 5/5):** The objective is to rotate the loops of blocks until the solid colored target block(s) land exactly inside the hollow cursor(s) of the matching color (e.g., placing the solid yellow block into the hollow yellow cursor). Matching all target blocks to their cursors scores a point (fills a dash at the top of the screen) and solves the level.</span><span class="add">- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on the colored arrow buttons (e.g., green or red arrows) rotates the adjacent loop of blocks one step clockwise or counter-clockwise. The entire game is driven by these arrow clicks.</span><span class="add">- **Strict Action Limit (Confidence 5/5):** Levels have a hard action cap. Exceeding this limit immediately triggers a `GAME_OVER`. Every single action counts—you must find the optimal path and absolutely avoid burning actions on aimless exploration, long unverified sequences, or infinite loops.</span><span class="add">- **Intersection Mechanics (Confidence 4/5):** On levels with multiple intersecting tracks (like Level 2), blocks located at the intersection points belong to both intersecting loops. You can transfer a block from one loop to another by moving it onto the intersection and then rotating the perpendicular loop.</span><span class="add">- **Open Hypothesis (Confidence 2/5):** As levels progress past Level 2, new obstacles, tracks of different shapes, or complex overlapping cursors might be introduced. It is currently unconfirmed if different colored blocks can block each other or overlap on the same track. </span><span class="blank"></span><span>## Play Strategy</span><span class="add">- **Simulate Offline Before Executing:** Because of the strict action cap, you MUST find the shortest possible sequence of moves mathematically before committing to actions. Build a Python skill that parses the board into tracks (lists of coordinates) and simulates arrow clicks as array shifts (permutations). Use a breadth-first search (BFS) to find the shortest path to the target state.</span><span class="add">- **Execute Carefully from the Main Prompt:** Do NOT let your solver skills blindly execute long sequences of actions inline using `tools.take_actions()`. If the internal simulation desyncs from the actual game state, the skill will repeatedly execute flawed moves and rapidly drain your action limit, causing a Game Over. Instead, have your solver skill `print()` or `result` the optimal list of coordinate clicks, and then submit them yourself from the main agent in short, verifiable batches (3-5 actions at a time).</span><span class="add">- **Use Intersecting Tracks as Storage Buffers:** When multiple target blocks share the same track, they must be spaced apart by an exact distance to simultaneously land on their cursors. Use the perpendicular intersecting tracks to temporarily &quot;park&quot; one block. This allows you to rotate the primary track to adjust the distance between the blocks before bringing the parked block back in.</span><span class="blank"></span><span>## Skill &amp; Tool Development Lessons</span><span class="add">- **Dynamic Parsing:** Do not hardcode track or cursor coordinates. Grid states change drastically between levels. Write scripts to dynamically scan the hex grid for arrows (colors `8` and `e`), solid 2x2 blocks, and hollow cursors to construct the track graphs.</span><span class="add">- **Perfect Sandbox Modeling:** Your approach of extracting track positions (e.g., `V_pos`, `M_pos`) and mapping actions to cyclic permutations (e.g., `apply_shift(V_pos, 1)`) is proven and highly successful. Reuse this mathematical modeling for future levels to build fast, accurate offline puzzle solvers without risking game actions.</span></pre></div></div></div><div class="ms k-over"><div class="ms-rail"><span class="dot"></span></div><div class="ms-body"><div class="ms-meta"><span class="lvbadge">level 2</span><span class="kind k-over">game-over</span><span class="act">action 138</span></div><div class="ms-head">Fix the target abstraction</div><div class="ms-detail">Cursors aren&#x27;t always yellow — read the cursor color and match it, don&#x27;t hardcode.</div><div class="raw-evo"><div class="raw-evo-head">original harness evolution output <span class="raw-passes">prompt / skills / subagents / memory</span></div><pre class="raw-evo-body">[generation 3 · prompt pass]
+# IMPROVED BASE PROMPT
+
+# STRATEGIC GUIDANCE
+
+## Discovered Game Rules
+- **Core Goal &amp; Color Matching (Confidence 5/5):** The objective is to rotate the loops of blocks until EVERY solid target block lands exactly inside the hollow cursor of its MATCHING COLOR. For example, a solid Blue block must be placed into a Blue cursor, and a solid Purple block into a Purple cursor. Matching all target blocks to their cursors simultaneously scores a point and solves the level.
+- **Cursor Identification (Confidence 5/5):** Cursors are NOT always yellow! They are hollow diamond shapes located at track intersections. A cursor&#x27;s specific color is determined by the 4 colored pixels at its corners. For example, Level 2 features Blue cursors and Purple cursors. You must dynamically identify cursor colors and pair them with the corresponding solid blocks.
+- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on the colored arrow buttons (e.g., green or red arrows) rotates the adjacent loop of blocks one step clockwise or counter-clockwise. The entire game is driven by these arrow clicks.
+- **Intersection Transfers (Confidence 5/5):** Blocks located at intersection points belong to both intersecting loops. You can transfer a block between loops by moving it onto the intersection and then rotating the perpendicular loop.
+- **Strict Action Limit (Confidence 5/5):** Levels have a hard action cap (visually tracked by a line drawing downwards on the far left edge at x=0). Every valid move consumes a point. Exceeding this limit before solving the puzzle immediately triggers a `GAME_OVER`. Aimless exploration or infinite loops are fatal.
+- **Open Hypothesis (Confidence 2/5):** As levels progress, obstacles, varying track shapes, or different block sizes might appear. It is unconfirmed if blocks of different colors can pass through each other or if they collide on the same track. Assume they do not collide unless proven otherwise.
+
+## Critical Execution Warnings (Learn from past GAME OVERs)
+1. **Do NOT Hallucinate Target Colors:** In your previous attempt, you assumed the targets were cyan (&quot;b&quot;) or yellow blocks because Level 1 used yellow elements. You ignored the actual Purple and Blue cursors/blocks, causing your solver to chase the wrong goal. ALWAYS inspect the cursor corner colors and target the exactly matching 2x2 solid blocks. You must use the `process_memory` tool to update `mem_002` to reflect this exact Color Matching rule.
+2. **Do NOT Copy-Paste Action JSON:** You recently suffered a `GAME_OVER` because your solver correctly planned an exact sequence `[(14,26), (39,17), ...]` but you lazily submitted the exact same `ACTION6(39,17)` up to 19 times in a row across multiple batches. When submitting `tools.take_actions`, you MUST actively pay attention and carefully type out the exact `x` and `y` coordinates for each step of your plan. Never blindly copy-paste the JSON from previous turns.
+3. **Respect Batch Limits:** Do NOT submit 5+ actions in a single batch. Keep batches to 1-4 actions maximum so you can verify the board state hasn&#x27;t desynchronized from your mental model.
+
+## Play Strategy &amp; Skill Development
+- **Dynamic Board Parsing:** Continue using your Python skills to dynamically scan the hex grid. Find arrows (colors `8` and `e`), solid 2x2 blocks (e.g., `grid[y][x] == c` and `grid[y+1][x+1] == c`), and hollow cursors (look for 4 corner pixels of the same color forming a 4x4 bounding box, e.g., `grid[y][x] == c` and `grid[y+3][x+3] == c`). Extract the exact coordinates of the track loops (e.g., `V_loop`, `M_loop`).
+- **Offline BFS Solver:** Because of the strict action cap, you MUST solve the puzzle offline. Build a script that:
+  1. Models the tracks as arrays of coordinates.
+  2. Models arrow clicks as cyclic permutations of these arrays.
+  3. Uses Breadth-First Search (BFS) to find the shortest sequence of arrow clicks.
+  4. **Target Condition:** The BFS should successfully terminate ONLY when every cursor position contains a block of the matching color. Do NOT hardcode a single color target! Match block color to cursor color.
+- **Careful Execution:** Once the solver prints the optimal sequence of coordinates to `stdout`, read them from the TOOL RESULTS and submit them from the main prompt in careful batches of 2-4 actions. Validate that the blocks move exactly as predicted before submitting the next batch.
+
+[generation 3 · skills pass]
+{
+  &quot;analysis&quot;: &quot;The agent repeatedly computes the shortest path using `solve_level_2` but manually executes it in batches of 4 actions. This piecemeal execution led to turn exhaustion (GAME_OVER at step 138). I am updating `solve_level_2` (skill_006) to compute the full path offline and immediately execute it entirely via a single `tools.take_actions` call, bypassing manual chunking and solving the level instantly.&quot;,
+  &quot;add&quot;: [],
+  &quot;edit&quot;: [
+    {
+      &quot;id&quot;: &quot;skill_006&quot;,
+      &quot;name&quot;: &quot;solve_level_2&quot;,
+      &quot;description&quot;: &quot;Uses purely offline permutation BFS to find the shortest path for Level 2 and completely executes it inline, avoiding manual batch limits and turn exhaustion.&quot;,
+      &quot;code&quot;: &quot;import collections\n\ngrid = state.latest_frame.frame[-1]\n\nblocks = []\nfor y in range(len(grid)-1):\n    for x in range(len(grid[y])-1):\n        c = grid[y][x]\n        if c not in \&quot;0348e\&quot;:\n            if grid[y][x+1] == c and grid[y+1][x] == c and grid[y+1][x+1] == c:\n                blocks.append((x, y, c))\n                \ncursors = []\nfor y in range(len(grid)-3):\n    for x in range(len(grid[y])-3):\n        c = grid[y][x]\n        if c not in \&quot;0348e\&quot;:\n            if grid[y][x+3] == c and grid[y+3][x] == c and grid[y+3][x+3] == c:\n                cursors.append((x+1, y+1, c))\n\nV_pos = [\n    (23,17), (26,17), (29,17), (32,17), (35,17),\n    (35,20), (35,23), (35,26), (35,29), (35,32), (35,35), (35,38), (35,41), (35,44),\n    (32,44), (29,44), (26,44), (23,44),\n    (23,41), (23,38), (23,35), (23,32), (23,29), (23,26), (23,23), (23,20)\n]\nM_pos = [(17,26), (20,26), (23,26), (26,26), (29,26), (32,26), (35,26), (38,26), (41,26), (44,26)]\nB_pos = [(17,35), (20,35), (23,35), (26,35), (29,35), (32,35), (35,35), (38,35), (41,35), (44,35)]\n\nmoves = {\n    \&quot;V_L\&quot;: (20,17), \&quot;V_R\&quot;: (39,17),\n    \&quot;M_L\&quot;: (14,26), \&quot;M_R\&quot;: (48,26),\n    \&quot;B_L\&quot;: (14,35), \&quot;B_R\&quot;: (48,35)\n}\n\nstart_state = tuple(sorted((x, y) for x, y, c in blocks))\ntarget_coords = set((x, y) for x, y, c in cursors)\n\nif not start_state or not target_coords:\n    print(\&quot;Blocks or cursors not found!\&quot;)\n    result = {\&quot;success\&quot;: False}\nelse:\n    queue = collections.deque([(start_state, [])])\n    visited = {start_state}\n    path = None\n\n    while queue:\n        curr, p = queue.popleft()\n        if set(curr) == target_coords:\n            path = p\n            break\n            \n        for m_name, m_coord in moves.items():\n            new_blocks = []\n            for x, y in curr:\n                nx, ny = x, y\n                if m_name.startswith(\&quot;V_\&quot;) and (x, y) in V_pos:\n                    idx = V_pos.index((x, y))\n                    nx, ny = V_pos[(idx - 1) % len(V_pos)] if m_name.endswith(\&quot;_L\&quot;) else V_pos[(idx + 1) % len(V_pos)]\n                elif m_name.startswith(\&quot;M_\&quot;) and (x, y) in M_pos:\n                    idx = M_pos.index((x, y))\n                    nx, ny = M_pos[(idx - 1) % len(M_pos)] if m_name.endswith(\&quot;_L\&quot;) else M_pos[(idx + 1) % len(M_pos)]\n                elif m_name.startswith(\&quot;B_\&quot;) and (x, y) in B_pos:\n                    idx = B_pos.index((x, y))\n                    nx, ny = B_pos[(idx - 1) % len(B_pos)] if m_name.endswith(\&quot;_L\&quot;) else B_pos[(idx + 1) % len(B_pos)]\n                new_blocks.append((nx, ny))\n                \n            new_s = tuple(sorted(new_blocks))\n            if len(set(new_s)) &lt; len(new_s):\n                continue\n            if new_s not in visited:\n                visited.add(new_s)\n                queue.append((new_s, p + [{\&quot;name\&quot;: \&quot;ACTION6\&quot;, \&quot;x\&quot;: m_coord[0], \&quot;y\&quot;: m_coord[1]}]))\n\n    if path is not None:\n        print(f\&quot;Path found! Length: {len(path)}. Executing inline...\&quot;)\n        res = tools.take_actions(actions=path)\n        result = {\&quot;success\&quot;: True, \&quot;path_length\&quot;: len(path), \&quot;executed\&quot;: res[\&quot;executed_count\&quot;], \&quot;terminal\&quot;: res[\&quot;terminal\&quot;]}\n    else:\n        print(\&quot;No path found.\&quot;)\n        result = {\&quot;success\&quot;: False}\n&quot;
+    }
+  ],
+  &quot;delete&quot;: []
+}
+
+[generation 3 · subagents pass]
+{
+  &quot;analysis&quot;: &quot;The orchestrator repeatedly executes a manual loop of running a solver skill to compute an optimal path, then executing the path in small batches (4 actions at a time) due to generation limits, and sometimes re-running the solver. This tedious execution and verification loop should be delegated to a dedicated looping subagent that can run the skill and securely execute the full sequence step-by-step.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;name&quot;: &quot;solve_and_execute&quot;,
+      &quot;description&quot;: &quot;Runs a specified solver skill to find an optimal path, then safely executes the actions step-by-step until the goal is reached.&quot;,
+      &quot;system_instructions&quot;: &quot;You are an execution subagent bridging offline solvers and online action execution. Your task is to: 1) Call run_skill on the solver skill ID provided by the orchestrator to obtain the optimal action sequence. 2) Execute the sequence using the take_actions tool, proceeding in small batches or step-by-step. 3) Monitor the game state after each execution batch. If a GAME_OVER occurs, the level changes, or the board state deviates from expectations, STOP executing immediately and call subagent_return with the failure details. 4) If the full sequence is completed successfully, return control to the orchestrator.&quot;,
+      &quot;directive&quot;: &quot;Run the specified solver skill and safely execute its resulting action sequence.&quot;,
+      &quot;return_condition&quot;: &quot;Return upon successful completion of the path, or abort early if GAME_OVER, a level change, or an unexpected state deviation occurs.&quot;,
+      &quot;handler_type&quot;: &quot;looping&quot;,
+      &quot;max_turns&quot;: 25,
+      &quot;allowed_tools&quot;: [
+        &quot;run_skill&quot;,
+        &quot;take_actions&quot;
+      ]
+    }
+  ],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: []
+}
+
+[generation 3 · memory pass]
+{
+  &quot;analysis&quot;: &quot;The agent consistently hits the 60-move limit and fails Level 2 because its offline solver models a hallucinated rectangular vertical loop. The parse_level_2 tool clearly revealed exactly 8 arrows corresponding to 3 straight horizontal tracks and 1 straight vertical track, but the agent ignored this and continued using its faulty solver. Adding the exact track layout and arrow coordinates to memory will force the agent to correct its solver model.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;title&quot;: &quot;Level 2 Track Layout and Arrows&quot;,
+      &quot;body&quot;: &quot;Level 2 consists of exactly 3 horizontal tracks (at y=17, y=26, y=35) and exactly 1 straight vertical track (at x=38). The horizontal tracks are rotated by clicking the arrows at x=14 (left) and x=48 (right). The vertical track is rotated by clicking the arrows at x=39, y=14 (top) and y=48 (bottom). There are no rectangular loops in Level 2.&quot;,
+      &quot;tags&quot;: [&quot;layout&quot;, &quot;mechanics&quot;],
+      &quot;confidence&quot;: 5
+    }
+  ],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: []
+}</pre></div><div class="evo"><div class="evo-head">accepted rewritten policy (new lines highlighted)</div><pre class="evo-body"><span># IMPROVED BASE PROMPT</span><span class="blank"></span><span># STRATEGIC GUIDANCE</span><span class="blank"></span><span>## Discovered Game Rules</span><span class="add">- **Core Goal &amp; Color Matching (Confidence 5/5):** The objective is to rotate the loops of blocks until EVERY solid target block lands exactly inside the hollow cursor of its MATCHING COLOR. For example, a solid Blue block must be placed into a Blue cursor, and a solid Purple block into a Purple cursor. Matching all target blocks to their cursors simultaneously scores a point and solves the level.</span><span class="add">- **Cursor Identification (Confidence 5/5):** Cursors are NOT always yellow! They are hollow diamond shapes located at track intersections. A cursor&#x27;s specific color is determined by the 4 colored pixels at its corners. For example, Level 2 features Blue cursors and Purple cursors. You must dynamically identify cursor colors and pair them with the corresponding solid blocks.</span><span>- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on the colored arrow buttons (e.g., green or red arrows) rotates the adjacent loop of blocks one step clockwise or counter-clockwise. The entire game is driven by these arrow clicks.</span><span class="add">- **Intersection Transfers (Confidence 5/5):** Blocks located at intersection points belong to both intersecting loops. You can transfer a block between loops by moving it onto the intersection and then rotating the perpendicular loop.</span><span class="add">- **Strict Action Limit (Confidence 5/5):** Levels have a hard action cap (visually tracked by a line drawing downwards on the far left edge at x=0). Every valid move consumes a point. Exceeding this limit before solving the puzzle immediately triggers a `GAME_OVER`. Aimless exploration or infinite loops are fatal.</span><span class="add">- **Open Hypothesis (Confidence 2/5):** As levels progress, obstacles, varying track shapes, or different block sizes might appear. It is unconfirmed if blocks of different colors can pass through each other or if they collide on the same track. Assume they do not collide unless proven otherwise.</span><span class="blank"></span><span class="add">## Critical Execution Warnings (Learn from past GAME OVERs)</span><span class="add">1. **Do NOT Hallucinate Target Colors:** In your previous attempt, you assumed the targets were cyan (&quot;b&quot;) or yellow blocks because Level 1 used yellow elements. You ignored the actual Purple and Blue cursors/blocks, causing your solver to chase the wrong goal. ALWAYS inspect the cursor corner colors and target the exactly matching 2x2 solid blocks. You must use the `process_memory` tool to update `mem_002` to reflect this exact Color Matching rule.</span><span class="add">2. **Do NOT Copy-Paste Action JSON:** You recently suffered a `GAME_OVER` because your solver correctly planned an exact sequence `[(14,26), (39,17), ...]` but you lazily submitted the exact same `ACTION6(39,17)` up to 19 times in a row across multiple batches. When submitting `tools.take_actions`, you MUST actively pay attention and carefully type out the exact `x` and `y` coordinates for each step of your plan. Never blindly copy-paste the JSON from previous turns.</span><span class="add">3. **Respect Batch Limits:** Do NOT submit 5+ actions in a single batch. Keep batches to 1-4 actions maximum so you can verify the board state hasn&#x27;t desynchronized from your mental model.</span><span class="blank"></span><span class="add">## Play Strategy &amp; Skill Development</span><span class="add">- **Dynamic Board Parsing:** Continue using your Python skills to dynamically scan the hex grid. Find arrows (colors `8` and `e`), solid 2x2 blocks (e.g., `grid[y][x] == c` and `grid[y+1][x+1] == c`), and hollow cursors (look for 4 corner pixels of the same color forming a 4x4 bounding box, e.g., `grid[y][x] == c` and `grid[y+3][x+3] == c`). Extract the exact coordinates of the track loops (e.g., `V_loop`, `M_loop`).</span><span class="add">- **Offline BFS Solver:** Because of the strict action cap, you MUST solve the puzzle offline. Build a script that:</span><span class="add">  1. Models the tracks as arrays of coordinates.</span><span class="add">  2. Models arrow clicks as cyclic permutations of these arrays.</span><span class="add">  3. Uses Breadth-First Search (BFS) to find the shortest sequence of arrow clicks.</span><span class="add">  4. **Target Condition:** The BFS should successfully terminate ONLY when every cursor position contains a block of the matching color. Do NOT hardcode a single color target! Match block color to cursor color.</span><span class="add">- **Careful Execution:** Once the solver prints the optimal sequence of coordinates to `stdout`, read them from the TOOL RESULTS and submit them from the main prompt in careful batches of 2-4 actions. Validate that the blocks move exactly as predicted before submitting the next batch.</span></pre></div><div class="produced"><span class="arrow">→ produced</span><code class="skill">find_entities</code><code class="skill">inspect_colors</code></div></div></div><div class="ms k-up"><div class="ms-rail"><span class="dot"></span></div><div class="ms-body"><div class="ms-meta"><span class="lvbadge">level 3</span><span class="kind k-up">level-up</span><span class="act">action 163</span></div><div class="ms-head">Compile the rule into a solver procedure</div><div class="ms-detail">Map objects, model the button permutations, search (BFS) for the moves.</div><div class="raw-evo"><div class="raw-evo-head">original harness evolution output <span class="raw-passes">prompt / skills / subagents / memory</span></div><pre class="raw-evo-body">[generation 4 · prompt pass]
+# IMPROVED BASE PROMPT
+
+# STRATEGIC GUIDANCE
+
+## Discovered Game Rules
+- **Core Goal &amp; Color Matching (Confidence 5/5):** To score a point and advance the level, you must use the arrows to rotate the tracks until EVERY solid 2x2 colored block lands exactly inside the 4x4 hollow cursor of its MATCHING COLOR. For example, a cyan block must be placed into a cyan cursor. All targets must be satisfied simultaneously. (Ref: mem_002)
+- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on colored arrow buttons (e.g., green or red) rotates the adjacent track/loop of blocks one step. (Ref: mem_001)
+- **Intersection Transfers (Confidence 5/5):** Blocks located at track intersections belong to both intersecting loops. You can transfer a block between loops by moving it onto the intersection and then rotating the other loop. (Ref: mem_004)
+- **Strict Move Limit (Confidence 5/5):** Levels have a hard action cap, visually tracked by a vertical line drawing downwards on the far left edge of the grid (x=0). Every valid move changes a pixel color there. Exceeding this limit before solving the puzzle triggers an immediate `GAME_OVER`. Aimless exploration is fatal. (Ref: mem_003)
+- **Dynamic Track Layouts (Confidence 5/5):** Every level introduces a completely new track layout. Level 1 was a single rectangle, Level 2 was a grid of straight intersecting lines, and Level 3 features interlocking irregular loops. Layouts, arrows, and target colors must be dynamically mapped for each new level.
+- **Open Hypothesis (Confidence 1/5):** As track shapes become more complex in higher levels, it is unconfirmed if blocks of different colors collide or block each other on the same track. Assume they do not collide unless proven otherwise.
+
+## Critical Execution Warnings (Learn from Past Successes &amp; Failures)
+1. **Do NOT Hallucinate Target Colors or Layouts:** In the past, you were misled by prompts that incorrectly hardcoded target colors for a level. NEVER hardcode colors or track coordinates based on previous assumptions! You must ALWAYS write and run Python skills (like your highly successful `check_all_targets`) to dynamically parse the grid for the exact coordinates and hex colors of arrows, solid blocks, and hollow cursors (look for 4 corner pixels forming a 4x4 bound).
+2. **Maximize Inline Action Execution:** You recently achieved a massive breakthrough by running your offline BFS solver and using `tools.take_actions()` *inside* your Python skill to execute up to 7 steps inline automatically. This bypasses VLM batch limits and safely executes optimal plans without desyncs. **Continue using inline execution for known optimal paths.** 
+3. **Always Check for Level Transitions:** When executing paths from a skill loop, verify `resp.level_changed` or `resp.terminal` after EVERY action. If the level changes mid-execution, break out of the loop immediately so you don&#x27;t inadvertently waste actions on the new level&#x27;s board state.
+
+## Play Strategy &amp; Skill Development
+To beat the newly reached Level 3 and beyond, stick to your proven, highly successful methodology:
+- **Step 1: Map the Board.** Use Python scripts to identify the exact coordinates of all arrows, solid blocks, and cursors. Map the full coordinate array of each distinct track loop.
+- **Step 2: Model the Permutations.** Write a script to model exactly how each arrow permutes the coordinates of the blocks along its mapped track. Check how the intersections overlap.
+- **Step 3: Build an Offline BFS Solver.** Construct a Breadth-First Search script that finds the absolute shortest sequence of arrow clicks required to route all solid blocks into their matching cursors simultaneously. 
+- **Step 4: Safe Inline Execution.** Modify the solver to automatically execute the winning path using `tools.take_actions(actions=[...])` in safe chunks, ensuring the script halts the moment `resp.level_changed` evaluates to `True`.
+
+[generation 4 · skills pass]
+```json
+{
+  &quot;analysis&quot;: &quot;Level 2 is complete and the agent has advanced. I am removing all Level 2-specific hardcoded scripts (solvers, simulators, and level-specific scanners) as well as redundant entity-finding scripts that have been superseded by the robust and generic `check_all_targets` (skill_013) to declutter the workspace for Level 3.&quot;,
+  &quot;add&quot;: [],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: [
+    &quot;skill_004&quot;,
+    &quot;skill_005&quot;,
+    &quot;skill_006&quot;,
+    &quot;skill_008&quot;,
+    &quot;skill_009&quot;,
+    &quot;skill_010&quot;,
+    &quot;skill_011&quot;,
+    &quot;skill_012&quot;
+  ]
+}
+```
+
+[generation 4 · subagents pass]
+{
+  &quot;analysis&quot;: &quot;The orchestrator repeatedly manually wrote and debugged ad-hoc Python scripts to inspect grid colors and coordinates, showing a need for a dedicated `programmatic_inspector` looping agent to handle script-based state extraction. Additionally, the orchestrator successfully executed solvers inline using `run_skill` (e.g., `actions_taken_inline: 7`), which makes the step-by-step action loop of `solve_and_execute` redundant and inefficient. We delete `solve_and_execute`.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;name&quot;: &quot;programmatic_inspector&quot;,
+      &quot;description&quot;: &quot;Writes, tests, and executes ad-hoc Python scripts to inspect the grid, locate entities, verify colors, and extract precise state information.&quot;,
+      &quot;system_instructions&quot;: &quot;You are a programmatic inspection agent. Your task is to use `process_skill` to write or edit short Python scripts that parse the latest grid frame, and `run_skill` to execute them. Use this to find exact coordinates, colors, block shapes, or counts of entities. Once you successfully extract the requested facts, call subagent_return with the findings.&quot;,
+      &quot;directive&quot;: &quot;Write and run a script to answer the specific grid state query, then return the facts.&quot;,
+      &quot;return_condition&quot;: &quot;When the script successfully runs and outputs the required information.&quot;,
+      &quot;handler_type&quot;: &quot;looping&quot;,
+      &quot;max_turns&quot;: 10,
+      &quot;allowed_tools&quot;: [
+        &quot;process_skill&quot;,
+        &quot;run_skill&quot;
+      ],
+      &quot;tags&quot;: [
+        &quot;analysis&quot;,
+        &quot;scripting&quot;
+      ]
+    }
+  ],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: [
+    &quot;subagent_003&quot;
+  ]
+}
+
+[generation 4 · memory pass]
+{
+  &quot;analysis&quot;: &quot;The trajectory shows that clearing Level 2 required satisfying multiple cursors at the same time, meaning mem_002 should specify that ALL targets must be matched simultaneously. Furthermore, the agent&#x27;s BFS code and visual observations strictly contradict mem_004: Level 2 actually features a large outer rectangular loop intersected by two horizontal tracks, not straight independent lines. Finally, advancing to Level 3 reveals a new layout of two interlocking octagonal loops.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;title&quot;: &quot;Level 3 Layout&quot;,
+      &quot;body&quot;: &quot;Level 3 features two interlocking circular/octagonal tracks. Each track is controlled by a pair of red and green arrows located at the bottom of the loop.&quot;,
+      &quot;tags&quot;: [
+        &quot;layout&quot;,
+        &quot;mechanics&quot;
+      ],
+      &quot;confidence&quot;: 4
+    }
+  ],
+  &quot;edit&quot;: [
+    {
+      &quot;id&quot;: &quot;mem_002&quot;,
+      &quot;title&quot;: &quot;Scoring Mechanic&quot;,
+      &quot;body&quot;: &quot;To score a point and fill one of the top progress dashes, use the arrows to rotate the tracks until ALL solid colored blocks on the level are simultaneously positioned inside their matching hollow cursors (e.g., placing all solid blocks into all matching hollow cursors).&quot;,
+      &quot;confidence&quot;: 5,
+      &quot;tags&quot;: [
+        &quot;rule&quot;,
+        &quot;mechanics&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;mem_004&quot;,
+      &quot;title&quot;: &quot;Level 2 Track Layout and Permutation Mechanics&quot;,
+      &quot;body&quot;: &quot;Level 2 consists of one large outer rectangular loop (with horizontal segments at y=17 and y=44, vertical at x=23 and x=35) intersected by two horizontal tracks (at y=26 and y=35). The outer loop rotates as a single unit, while the inner horizontal tracks shift left/right.&quot;,
+      &quot;confidence&quot;: 5,
+      &quot;tags&quot;: [
+        &quot;layout&quot;,
+        &quot;mechanics&quot;
+      ]
+    }
+  ],
+  &quot;delete&quot;: []
+}</pre></div><div class="evo"><div class="evo-head">accepted rewritten policy (new lines highlighted)</div><pre class="evo-body"><span># IMPROVED BASE PROMPT</span><span class="blank"></span><span># STRATEGIC GUIDANCE</span><span class="blank"></span><span>## Discovered Game Rules</span><span class="add">- **Core Goal &amp; Color Matching (Confidence 5/5):** To score a point and advance the level, you must use the arrows to rotate the tracks until EVERY solid 2x2 colored block lands exactly inside the 4x4 hollow cursor of its MATCHING COLOR. For example, a cyan block must be placed into a cyan cursor. All targets must be satisfied simultaneously. (Ref: mem_002)</span><span class="add">- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on colored arrow buttons (e.g., green or red) rotates the adjacent track/loop of blocks one step. (Ref: mem_001)</span><span class="add">- **Intersection Transfers (Confidence 5/5):** Blocks located at track intersections belong to both intersecting loops. You can transfer a block between loops by moving it onto the intersection and then rotating the other loop. (Ref: mem_004)</span><span class="add">- **Strict Move Limit (Confidence 5/5):** Levels have a hard action cap, visually tracked by a vertical line drawing downwards on the far left edge of the grid (x=0). Every valid move changes a pixel color there. Exceeding this limit before solving the puzzle triggers an immediate `GAME_OVER`. Aimless exploration is fatal. (Ref: mem_003)</span><span class="add">- **Dynamic Track Layouts (Confidence 5/5):** Every level introduces a completely new track layout. Level 1 was a single rectangle, Level 2 was a grid of straight intersecting lines, and Level 3 features interlocking irregular loops. Layouts, arrows, and target colors must be dynamically mapped for each new level.</span><span class="add">- **Open Hypothesis (Confidence 1/5):** As track shapes become more complex in higher levels, it is unconfirmed if blocks of different colors collide or block each other on the same track. Assume they do not collide unless proven otherwise.</span><span class="blank"></span><span class="add">## Critical Execution Warnings (Learn from Past Successes &amp; Failures)</span><span class="add">1. **Do NOT Hallucinate Target Colors or Layouts:** In the past, you were misled by prompts that incorrectly hardcoded target colors for a level. NEVER hardcode colors or track coordinates based on previous assumptions! You must ALWAYS write and run Python skills (like your highly successful `check_all_targets`) to dynamically parse the grid for the exact coordinates and hex colors of arrows, solid blocks, and hollow cursors (look for 4 corner pixels forming a 4x4 bound).</span><span class="add">2. **Maximize Inline Action Execution:** You recently achieved a massive breakthrough by running your offline BFS solver and using `tools.take_actions()` *inside* your Python skill to execute up to 7 steps inline automatically. This bypasses VLM batch limits and safely executes optimal plans without desyncs. **Continue using inline execution for known optimal paths.** </span><span class="add">3. **Always Check for Level Transitions:** When executing paths from a skill loop, verify `resp.level_changed` or `resp.terminal` after EVERY action. If the level changes mid-execution, break out of the loop immediately so you don&#x27;t inadvertently waste actions on the new level&#x27;s board state.</span><span class="blank"></span><span>## Play Strategy &amp; Skill Development</span><span class="add">To beat the newly reached Level 3 and beyond, stick to your proven, highly successful methodology:</span><span class="add">- **Step 1: Map the Board.** Use Python scripts to identify the exact coordinates of all arrows, solid blocks, and cursors. Map the full coordinate array of each distinct track loop.</span><span class="add">- **Step 2: Model the Permutations.** Write a script to model exactly how each arrow permutes the coordinates of the blocks along its mapped track. Check how the intersections overlap.</span><span class="add">- **Step 3: Build an Offline BFS Solver.** Construct a Breadth-First Search script that finds the absolute shortest sequence of arrow clicks required to route all solid blocks into their matching cursors simultaneously. </span><span class="add">- **Step 4: Safe Inline Execution.** Modify the solver to automatically execute the winning path using `tools.take_actions(actions=[...])` in safe chunks, ensuring the script halts the moment `resp.level_changed` evaluates to `True`.</span></pre></div><div class="produced"><span class="arrow">→ produced</span><code class="skill">solve_lvl3_bfs</code></div></div></div><div class="ms k-stag"><div class="ms-rail"><span class="dot"></span></div><div class="ms-body"><div class="ms-meta"><span class="lvbadge">level 3</span><span class="kind k-stag">stagnation</span><span class="act">action 239</span></div><div class="ms-head">Catch the stale solver</div><div class="ms-detail">76 actions without progress: the BFS solver is flagged buggy and the exact level model is recorded.</div><div class="raw-evo"><div class="raw-evo-head">original harness evolution output <span class="raw-passes">prompt / skills / subagents / memory</span></div><pre class="raw-evo-body">[generation 5 · prompt pass]
+# IMPROVED BASE PROMPT
+
+## Discovered Game Rules &amp; Mechanics
+- **Core Goal &amp; Color Matching (Confidence 5/5):** To score a point and advance the level, you must use the arrows to rotate the tracks until EVERY solid 2x2 colored block lands exactly inside the 4x4 hollow cursor of its MATCHING COLOR. All targets must be satisfied simultaneously. (Ref: mem_002)
+- **Target Coordinates (Confidence 5/5):** Because the hollow cursor is 4x4 and the solid block is 2x2, a correctly matched block sits entirely inside the cursor. The exact top-left corner of the solid block must equal `(cursor_x + 1, cursor_y + 1)`.
+- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on colored arrow buttons (e.g., green or red) rotates the adjacent track/loop of blocks one step. (Ref: mem_001)
+- **Intersection Transfers (Confidence 5/5):** Blocks located at track intersections belong to both intersecting loops. You can transfer a block between loops by moving it onto the intersection and then rotating the other loop (similar to a Hungarian Rings puzzle). (Ref: mem_004)
+- **Strict Move Limit (Confidence 5/5):** Levels have a hard action cap (e.g., 60 moves), visually tracked by a vertical line drawing downwards on the far left edge of the grid (x=0). Exceeding this limit before solving the puzzle triggers an immediate `GAME_OVER`. Aimless exploration is fatal. (Ref: mem_003)
+- **Level Track Layouts (Confidence 4/5):** Every level introduces a completely new track layout. 
+  - Level 2 was a rectangular loop intersected by two horizontal tracks. (Ref: mem_004)
+  - Level 3 features two interlocking loops (16 blocks each) intersecting at (30, 22) and (30, 34). Left loop arrows are at y=42 (Red x=23 CCW, Green x=26 CW). Right loop arrows are at y=42 (Red x=35 CCW, Green x=38 CW). (Ref: mem_005)
+- **Open Hypothesis (Confidence 1/5):** As track shapes become more complex in higher levels, it is unconfirmed if blocks of different colors collide or block each other on the same track. Assume they do not collide unless proven otherwise.
+
+## 🚨 CRITICAL WARNINGS &amp; PAST FAILURES (READ CAREFULLY) 🚨
+1. **JSON COPY-PASTE HALLUCINATIONS:** You are stuck in a massive failure loop. For the last 70 steps, you have repeatedly deduced the *exact correct manual actions* in your reasoning (e.g., &quot;2 clicks of L_red (x=23) and 2 clicks of R_red (x=35)&quot;), but then your generated JSON `actions` array hallucinates and contains 4 identical actions (e.g., four clicks of x=38 or x=35). **You MUST manually double-check the `x` and `y` coordinates of EVERY action in your JSON list.** To prevent this generation bug, **submit ONLY 1 or 2 actions per turn** instead of batching 4. 
+2. **STOP USING THE BUGGY BFS SOLVER:** Your Python `solve_lvl3_bfs` script has a fatal bug in its state transition or target logic, causing it to run in an infinite loop outputting the same ineffective moves (`actions_taken_inline: 4`) without solving the puzzle. **Do not run `solve_lvl3_bfs` anymore.** You already know the exact moves to win.
+
+## Play Strategy to Win Level 3 Right Now
+You perfectly mapped the board state in recent analysis steps:
+- Block &#x27;b&#x27; is at (18, 22) and needs to go to (15, 28) -&gt; exactly -2 steps (CCW) on the left loop.
+- Block &#x27;c&#x27; is at (42, 34) and needs to go to (45, 28) -&gt; exactly -2 steps (CCW) on the right loop.
+Because neither block passes through the intersection points during these moves, they can be routed independently. 
+
+**Execute this manual sequence right now to win:**
+1. Call `take_actions` with exactly TWO actions: `[{&quot;name&quot;: &quot;ACTION6&quot;, &quot;x&quot;: 23, &quot;y&quot;: 42}, {&quot;name&quot;: &quot;ACTION6&quot;, &quot;x&quot;: 23, &quot;y&quot;: 42}]`. This properly places &#x27;b&#x27;.
+2. On the very next turn, check the board to ensure it moved correctly, then call `take_actions` with exactly TWO actions: `[{&quot;name&quot;: &quot;ACTION6&quot;, &quot;x&quot;: 35, &quot;y&quot;: 42}, {&quot;name&quot;: &quot;ACTION6&quot;, &quot;x&quot;: 35, &quot;y&quot;: 42}]`. This properly places &#x27;c&#x27;.
+By taking only 2 actions at a time, you will avoid the JSON array duplication glitch and safely complete the level.
+
+## Looking Forward (Level 4+)
+- **Step 1:** Once the level transitions, use your highly successful `find_all_cursors` and `find_blocks_exact` Python skills to rigorously map the new grid, target offsets, and arrow locations. DO NOT hallucinate rules from previous levels.
+- **Step 2:** If you build a new BFS for Level 4, **DO NOT run actions inline automatically right away.** Have the script print the raw `(x, y)` action sequence to `stdout`, so you can verify it isn&#x27;t outputting garbage. 
+- **Step 3:** For complex action sequences, manually input the moves from the main prompt in small batches (1-2 actions max) to maintain absolute control over the JSON output formatting and preserve your action cap.
+
+[generation 5 · skills pass]
+{
+  &quot;analysis&quot;: &quot;Deleted a large number of transient, single-use debugging scripts (test_*, find_blocks_*, etc.) that were created to diagnose a BFS and batch-execution bug. This unclutters the skill library and helps the agent focus on permanent, reusable logic.&quot;,
+  &quot;add&quot;: [],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: [
+    &quot;skill_015&quot;,
+    &quot;skill_016&quot;,
+    &quot;skill_017&quot;,
+    &quot;skill_018&quot;,
+    &quot;skill_019&quot;,
+    &quot;skill_020&quot;,
+    &quot;skill_021&quot;,
+    &quot;skill_022&quot;,
+    &quot;skill_023&quot;,
+    &quot;skill_024&quot;,
+    &quot;skill_025&quot;,
+    &quot;skill_026&quot;,
+    &quot;skill_027&quot;,
+    &quot;skill_028&quot;,
+    &quot;skill_029&quot;
+  ]
+}
+
+[generation 5 · subagents pass]
+{
+  &quot;analysis&quot;: &quot;The orchestrator manually wrote and executed numerous ad-hoc Python scripts to debug a buggy BFS solver, locate exact block coordinates, and parse targets. It also mistakenly tried to call the &#x27;programmatic_inspector&#x27; subagent as a skill via run_skill. I am deleting &#x27;programmatic_inspector&#x27; and adding a dedicated &#x27;grid_diagnostics&#x27; looping subagent to own this programmatic state-analysis routine.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;name&quot;: &quot;grid_diagnostics&quot;,
+      &quot;description&quot;: &quot;Subagent that writes and runs Python scripts to analyze the grid state, locate entities, and debug solver logic. Use this instead of manually writing ad-hoc inspection scripts.&quot;,
+      &quot;system_instructions&quot;: &quot;You are a diagnostic inner agent. Your task is to write short Python scripts using process_skill to parse the grid state, find entity coordinates, or test logic, and then use run_skill to execute them. Once you have extracted the necessary insights, call subagent_return with a clear summary of the grid data.&quot;,
+      &quot;handler_type&quot;: &quot;looping&quot;,
+      &quot;max_turns&quot;: 8,
+      &quot;allowed_tools&quot;: [
+        &quot;process_skill&quot;,
+        &quot;run_skill&quot;
+      ]
+    }
+  ],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: [
+    &quot;subagent_004&quot;
+  ]
+}
+
+[generation 5 · memory pass]
+```json
+{
+  &quot;analysis&quot;: &quot;The agent has correctly calculated the 4 moves required to solve Level 3 (2x L_red, 2x R_red) but is failing to execute them because of a system bug where submitting multiple actions in one turn (via VLM or Python `take_actions`) overwrites all queued actions with the final one. I have added a warning about this batch bug and updated mem_005 with the confirmed track logic and exact required sequence to clear the level, instructing the agent to execute them one by one.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;title&quot;: &quot;CRITICAL Batch Execution Bug&quot;,
+      &quot;body&quot;: &quot;Due to a system bug, submitting multiple actions in a single step (whether in VLM text or via Python tools.take_actions) causes all queued actions to be overwritten by the last action in the sequence. To execute a multi-step plan, you MUST submit exactly ONE action per turn and wait for the environment to update.&quot;,
+      &quot;tags&quot;: [
+        &quot;rule&quot;,
+        &quot;constraints&quot;
+      ],
+      &quot;confidence&quot;: 5
+    }
+  ],
+  &quot;edit&quot;: [
+    {
+      &quot;id&quot;: &quot;mem_005&quot;,
+      &quot;title&quot;: &quot;Level 3 Layout and Solution&quot;,
+      &quot;body&quot;: &quot;Level 3 features two interlocking circular tracks sharing points (30,22) and (30,34). Left loop controls: x=23 (Red, CCW), x=26 (Green, CW). Right loop controls: x=35 (Red, CCW), x=38 (Green, CW) at y=42. Solid &#x27;b&#x27; at (18,22) requires exactly 2 L_red clicks (x=23) to reach its cursor at (15,28). Solid &#x27;c&#x27; at (42,34) requires exactly 2 R_red clicks (x=35) to reach its cursor at (45,28). Execute these 4 actions strictly ONE AT A TIME per turn.&quot;,
+      &quot;tags&quot;: [
+        &quot;layout&quot;,
+        &quot;mechanics&quot;
+      ],
+      &quot;confidence&quot;: 5
+    }
+  ],
+  &quot;delete&quot;: []
+}
+```</pre></div><div class="evo"><div class="evo-head">accepted rewritten policy (new lines highlighted)</div><pre class="evo-body"><span># IMPROVED BASE PROMPT</span><span class="blank"></span><span class="add">## Discovered Game Rules &amp; Mechanics</span><span class="add">- **Core Goal &amp; Color Matching (Confidence 5/5):** To score a point and advance the level, you must use the arrows to rotate the tracks until EVERY solid 2x2 colored block lands exactly inside the 4x4 hollow cursor of its MATCHING COLOR. All targets must be satisfied simultaneously. (Ref: mem_002)</span><span class="add">- **Target Coordinates (Confidence 5/5):** Because the hollow cursor is 4x4 and the solid block is 2x2, a correctly matched block sits entirely inside the cursor. The exact top-left corner of the solid block must equal `(cursor_x + 1, cursor_y + 1)`.</span><span>- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on colored arrow buttons (e.g., green or red) rotates the adjacent track/loop of blocks one step. (Ref: mem_001)</span><span class="add">- **Intersection Transfers (Confidence 5/5):** Blocks located at track intersections belong to both intersecting loops. You can transfer a block between loops by moving it onto the intersection and then rotating the other loop (similar to a Hungarian Rings puzzle). (Ref: mem_004)</span><span class="add">- **Strict Move Limit (Confidence 5/5):** Levels have a hard action cap (e.g., 60 moves), visually tracked by a vertical line drawing downwards on the far left edge of the grid (x=0). Exceeding this limit before solving the puzzle triggers an immediate `GAME_OVER`. Aimless exploration is fatal. (Ref: mem_003)</span><span class="add">- **Level Track Layouts (Confidence 4/5):** Every level introduces a completely new track layout. </span><span class="add">  - Level 2 was a rectangular loop intersected by two horizontal tracks. (Ref: mem_004)</span><span class="add">  - Level 3 features two interlocking loops (16 blocks each) intersecting at (30, 22) and (30, 34). Left loop arrows are at y=42 (Red x=23 CCW, Green x=26 CW). Right loop arrows are at y=42 (Red x=35 CCW, Green x=38 CW). (Ref: mem_005)</span><span>- **Open Hypothesis (Confidence 1/5):** As track shapes become more complex in higher levels, it is unconfirmed if blocks of different colors collide or block each other on the same track. Assume they do not collide unless proven otherwise.</span><span class="blank"></span><span class="add">## 🚨 CRITICAL WARNINGS &amp; PAST FAILURES (READ CAREFULLY) 🚨</span><span class="add">1. **JSON COPY-PASTE HALLUCINATIONS:** You are stuck in a massive failure loop. For the last 70 steps, you have repeatedly deduced the *exact correct manual actions* in your reasoning (e.g., &quot;2 clicks of L_red (x=23) and 2 clicks of R_red (x=35)&quot;), but then your generated JSON `actions` array hallucinates and contains 4 identical actions (e.g., four clicks of x=38 or x=35). **You MUST manually double-check the `x` and `y` coordinates of EVERY action in your JSON list.** To prevent this generation bug, **submit ONLY 1 or 2 actions per turn** instead of batching 4. </span><span class="add">2. **STOP USING THE BUGGY BFS SOLVER:** Your Python `solve_lvl3_bfs` script has a fatal bug in its state transition or target logic, causing it to run in an infinite loop outputting the same ineffective moves (`actions_taken_inline: 4`) without solving the puzzle. **Do not run `solve_lvl3_bfs` anymore.** You already know the exact moves to win.</span><span class="blank"></span><span class="add">## Play Strategy to Win Level 3 Right Now</span><span class="add">You perfectly mapped the board state in recent analysis steps:</span><span class="add">- Block &#x27;b&#x27; is at (18, 22) and needs to go to (15, 28) -&gt; exactly -2 steps (CCW) on the left loop.</span><span class="add">- Block &#x27;c&#x27; is at (42, 34) and needs to go to (45, 28) -&gt; exactly -2 steps (CCW) on the right loop.</span><span class="add">Because neither block passes through the intersection points during these moves, they can be routed independently. </span><span class="blank"></span><span class="add">**Execute this manual sequence right now to win:**</span><span class="add">1. Call `take_actions` with exactly TWO actions: `[{&quot;name&quot;: &quot;ACTION6&quot;, &quot;x&quot;: 23, &quot;y&quot;: 42}, {&quot;name&quot;: &quot;ACTION6&quot;, &quot;x&quot;: 23, &quot;y&quot;: 42}]`. This properly places &#x27;b&#x27;.</span><span class="add">2. On the very next turn, check the board to ensure it moved correctly, then call `take_actions` with exactly TWO actions: `[{&quot;name&quot;: &quot;ACTION6&quot;, &quot;x&quot;: 35, &quot;y&quot;: 42}, {&quot;name&quot;: &quot;ACTION6&quot;, &quot;x&quot;: 35, &quot;y&quot;: 42}]`. This properly places &#x27;c&#x27;.</span><span class="add">By taking only 2 actions at a time, you will avoid the JSON array duplication glitch and safely complete the level.</span><span class="blank"></span><span class="add">## Looking Forward (Level 4+)</span><span class="add">- **Step 1:** Once the level transitions, use your highly successful `find_all_cursors` and `find_blocks_exact` Python skills to rigorously map the new grid, target offsets, and arrow locations. DO NOT hallucinate rules from previous levels.</span><span class="add">- **Step 2:** If you build a new BFS for Level 4, **DO NOT run actions inline automatically right away.** Have the script print the raw `(x, y)` action sequence to `stdout`, so you can verify it isn&#x27;t outputting garbage. </span><span class="add">- **Step 3:** For complex action sequences, manually input the moves from the main prompt in small batches (1-2 actions max) to maintain absolute control over the JSON output formatting and preserve your action cap.</span></pre></div></div></div><div class="ms k-up"><div class="ms-rail"><span class="dot"></span></div><div class="ms-body"><div class="ms-meta"><span class="lvbadge">level 4</span><span class="kind k-up">level-up</span><span class="act">action 243</span></div><div class="ms-head">Reset stale state, reuse the method</div><div class="ms-detail">Delete level-specific memory, remap with existing skills, verify before executing.</div><div class="raw-evo"><div class="raw-evo-head">original harness evolution output <span class="raw-passes">prompt / skills / subagents / memory</span></div><pre class="raw-evo-body">[generation 6 · prompt pass]
+# IMPROVED BASE PROMPT
+
+## Discovered Game Rules &amp; Mechanics
+- **Core Goal &amp; Color Matching (Confidence 5/5):** To score a point and fill one of the top progress dashes, use the arrows to rotate the tracks until ALL solid colored 2x2 blocks are simultaneously positioned inside their matching hollow 4x4 cursors. (Ref: mem_002)
+- **Target Coordinates (Confidence 5/5):** A correctly matched block sits entirely inside the cursor. The exact top-left corner of the solid block must equal `(cursor_x + 1, cursor_y + 1)`.
+- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on colored arrow buttons rotates the adjacent track of blocks. Historically, green arrows rotate clockwise and red arrows rotate counter-clockwise. (Ref: mem_001)
+- **Strict Move Limit (Confidence 5/5):** Levels have a hard action cap, visually tracked by a vertical line drawing downwards on the far left edge of the grid (x=0) where a pixel changes color for every move. Exceeding this limit before solving the level results in an immediate GAME_OVER. Aimless exploration is fatal. (Ref: mem_003)
+- **Level Track Layouts (Confidence 5/5):** Every level introduces a completely new track layout. 
+  - Level 1 was a single loop. (Ref: mem_001)
+  - Level 2 was a rectangular loop intersected by two horizontal tracks. (Ref: mem_004)
+  - Level 3 featured two interlocking circular tracks. (Ref: mem_005, mem_007)
+- **Intersection Transfers (Confidence 5/5):** Blocks located at track intersections belong to both intersecting loops and can be transferred between loops.
+- **Open Hypothesis (Confidence 1/5):** As track shapes become more complex in higher levels, it is unconfirmed if blocks of different colors collide or block each other on the same track. Assume they do not collide unless proven otherwise.
+
+## 🚨 CRITICAL WARNING: BATCH EXECUTION BUG 🚨
+- **JSON COPY-PASTE HALLUCINATIONS (Confidence 5/5):** Due to a confirmed system bug, submitting multiple actions in a single step (whether via VLM text or Python `tools.take_actions`) causes queued actions to be overwritten by the last action in the sequence, or output duplicate garbage. (Ref: mem_006)
+- **The Fix:** To execute any multi-step plan, you **MUST submit exactly ONE or TWO actions per turn** via `take_actions` and wait for the environment to update. Do NOT batch 3+ actions. Your successful execution of Level 3 proved that small 1-2 action batches bypass this glitch.
+
+## Level 4 Strategy: Mapping and Solving
+Congratulations on successfully using the 2-action batch workaround to complete Level 3! You have leveled up (score is now 3).
+
+The grid has reset, and a completely new layout (Level 4) featuring multiple cross-shaped tracks has appeared. 
+
+**Step 1: Clean Up &amp; Map the New Grid**
+- Use `process_memory` to delete stale Level 3-specific entries (`mem_005`, `mem_007`) to keep your memory scratchpad clean and strictly relevant to current mechanics.
+- Run your existing Python skills (`check_all_targets`, `analyze_all_colors`) to rigorously map the Level 4 grid.
+- Identify all hollow cursors (targets), solid 2x2 blocks (pieces to move), and all arrow buttons. 
+
+**Step 2: Understand the Mechanics**
+- Probe the new arrow buttons carefully (1 action at a time) to understand how the new cross-shaped tracks permute. Do they operate independently, or do they shift pieces between the crosses?
+- **Conserve your moves (x=0 line).** Only take physical actions to map unknown permutations or to execute a known solution path.
+
+**Step 3: Solve Safely**
+- **DO NOT run `solve_lvl3_bfs`** — it is hardcoded for Level 3&#x27;s interlocking circular loops and will fail or burn moves on Level 4.
+- If you write a new solver script for Level 4, **do not have it execute actions inline**. Instead, have it `print()` the optimal `(x, y)` coordinate sequence to `stdout` so you can verify its logic.
+- Once you have the printed sequence from your tool, manually execute it from the main prompt using your safe 1-2 action batching method to guarantee successful progression without triggering the JSON overwrite bug.
+
+[generation 6 · skills pass]
+{
+  &quot;analysis&quot;: &quot;The agent manually completed the last few steps of level 3 to fix a batching bug and reached level 4. No new repetitive behaviors or skill errors were detected in the recent trajectory that warrant adding or modifying a skill at this time.&quot;,
+  &quot;add&quot;: [],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: []
+}
+
+[generation 6 · subagents pass]
+{
+  &quot;analysis&quot;: &quot;The orchestrator is manually executing known, multi-step action sequences step-by-step to place game elements in their target positions (e.g., submitting exactly two actions to move block &#x27;b&#x27;, then doing the same for &#x27;c&#x27;). Adding a looping execute_sequence subagent allows the orchestrator to delegate the rote execution and verification of planned move sequences.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;name&quot;: &quot;execute_sequence&quot;,
+      &quot;description&quot;: &quot;Executes a planned, step-by-step sequence of actions to reach a known target state.&quot;,
+      &quot;system_instructions&quot;: &quot;You are a sequence-execution subagent. Your task is to execute a predefined list of actions provided in your directive. Use the take_actions tool to perform the moves. After each move or small batch of moves, observe the grid to verify that the expected state changes occurred. If the sequence completes successfully, an unexpected event happens, or you trigger a level transition, stop and call subagent_return with a summary of the execution status.&quot;,
+      &quot;directive&quot;: &quot;Execute the following planned sequence of actions, verifying the expected outcomes at each step: {sequence}&quot;,
+      &quot;return_condition&quot;: &quot;Return when the sequence is completely executed, an unexpected state transition occurs, or the level changes.&quot;,
+      &quot;handler_type&quot;: &quot;looping&quot;,
+      &quot;max_turns&quot;: 15,
+      &quot;allowed_tools&quot;: [
+        &quot;take_actions&quot;
+      ],
+      &quot;tags&quot;: [
+        &quot;execution&quot;
+      ]
+    }
+  ],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: []
+}
+
+[generation 6 · memory pass]
+{
+  &quot;analysis&quot;: &quot;The trajectory shows the agent successfully completed Level 3 by applying the corrected action sequence (x=23 twice, then x=38 twice), advancing the score to 3. I have updated mem_005 with the verified solution, deleted the temporary correction mem_007, and added a new memory describing the initial layout of Level 4 (four disconnected cross-shaped tracks).&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;title&quot;: &quot;Level 4 Layout&quot;,
+      &quot;body&quot;: &quot;Level 4 (reached at score 3) features four separate, non-overlapping cross-shaped tracks arranged in a 2x2 grid. Each cross has red arrows on its left and bottom ends, and green arrows on its top and right ends.&quot;,
+      &quot;tags&quot;: [&quot;layout&quot;, &quot;level4&quot;],
+      &quot;confidence&quot;: 5
+    }
+  ],
+  &quot;edit&quot;: [
+    {
+      &quot;id&quot;: &quot;mem_005&quot;,
+      &quot;body&quot;: &quot;Level 3 features two interlocking circular tracks sharing points (30,22) and (30,34). Left loop controls: x=23 (Red, CCW), x=26 (Green, CW). Right loop controls: x=35 (Red, CCW), x=38 (Green, CW) at y=42. Solution: move solid &#x27;b&#x27; with exactly 2 CCW steps (x=23), then move solid &#x27;c&#x27; with exactly 2 CW steps (x=38). Execute strictly ONE AT A TIME per turn.&quot;,
+      &quot;confidence&quot;: 5,
+      &quot;title&quot;: &quot;Level 3 Layout and Solution&quot;,
+      &quot;tags&quot;: [&quot;layout&quot;, &quot;mechanics&quot;, &quot;level3&quot;]
+    }
+  ],
+  &quot;delete&quot;: [
+    &quot;mem_007&quot;
+  ]
+}</pre></div><div class="evo"><div class="evo-head">accepted rewritten policy (new lines highlighted)</div><pre class="evo-body"><span># IMPROVED BASE PROMPT</span><span class="blank"></span><span>## Discovered Game Rules &amp; Mechanics</span><span class="add">- **Core Goal &amp; Color Matching (Confidence 5/5):** To score a point and fill one of the top progress dashes, use the arrows to rotate the tracks until ALL solid colored 2x2 blocks are simultaneously positioned inside their matching hollow 4x4 cursors. (Ref: mem_002)</span><span class="add">- **Target Coordinates (Confidence 5/5):** A correctly matched block sits entirely inside the cursor. The exact top-left corner of the solid block must equal `(cursor_x + 1, cursor_y + 1)`.</span><span class="add">- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on colored arrow buttons rotates the adjacent track of blocks. Historically, green arrows rotate clockwise and red arrows rotate counter-clockwise. (Ref: mem_001)</span><span class="add">- **Strict Move Limit (Confidence 5/5):** Levels have a hard action cap, visually tracked by a vertical line drawing downwards on the far left edge of the grid (x=0) where a pixel changes color for every move. Exceeding this limit before solving the level results in an immediate GAME_OVER. Aimless exploration is fatal. (Ref: mem_003)</span><span class="add">- **Level Track Layouts (Confidence 5/5):** Every level introduces a completely new track layout. </span><span class="add">  - Level 1 was a single loop. (Ref: mem_001)</span><span>  - Level 2 was a rectangular loop intersected by two horizontal tracks. (Ref: mem_004)</span><span class="add">  - Level 3 featured two interlocking circular tracks. (Ref: mem_005, mem_007)</span><span class="add">- **Intersection Transfers (Confidence 5/5):** Blocks located at track intersections belong to both intersecting loops and can be transferred between loops.</span><span>- **Open Hypothesis (Confidence 1/5):** As track shapes become more complex in higher levels, it is unconfirmed if blocks of different colors collide or block each other on the same track. Assume they do not collide unless proven otherwise.</span><span class="blank"></span><span class="add">## 🚨 CRITICAL WARNING: BATCH EXECUTION BUG 🚨</span><span class="add">- **JSON COPY-PASTE HALLUCINATIONS (Confidence 5/5):** Due to a confirmed system bug, submitting multiple actions in a single step (whether via VLM text or Python `tools.take_actions`) causes queued actions to be overwritten by the last action in the sequence, or output duplicate garbage. (Ref: mem_006)</span><span class="add">- **The Fix:** To execute any multi-step plan, you **MUST submit exactly ONE or TWO actions per turn** via `take_actions` and wait for the environment to update. Do NOT batch 3+ actions. Your successful execution of Level 3 proved that small 1-2 action batches bypass this glitch.</span><span class="blank"></span><span class="add">## Level 4 Strategy: Mapping and Solving</span><span class="add">Congratulations on successfully using the 2-action batch workaround to complete Level 3! You have leveled up (score is now 3).</span><span class="blank"></span><span class="add">The grid has reset, and a completely new layout (Level 4) featuring multiple cross-shaped tracks has appeared. </span><span class="blank"></span><span class="add">**Step 1: Clean Up &amp; Map the New Grid**</span><span class="add">- Use `process_memory` to delete stale Level 3-specific entries (`mem_005`, `mem_007`) to keep your memory scratchpad clean and strictly relevant to current mechanics.</span><span class="add">- Run your existing Python skills (`check_all_targets`, `analyze_all_colors`) to rigorously map the Level 4 grid.</span><span class="add">- Identify all hollow cursors (targets), solid 2x2 blocks (pieces to move), and all arrow buttons. </span><span class="blank"></span><span class="add">**Step 2: Understand the Mechanics**</span><span class="add">- Probe the new arrow buttons carefully (1 action at a time) to understand how the new cross-shaped tracks permute. Do they operate independently, or do they shift pieces between the crosses?</span><span class="add">- **Conserve your moves (x=0 line).** Only take physical actions to map unknown permutations or to execute a known solution path.</span><span class="blank"></span><span class="add">**Step 3: Solve Safely**</span><span class="add">- **DO NOT run `solve_lvl3_bfs`** — it is hardcoded for Level 3&#x27;s interlocking circular loops and will fail or burn moves on Level 4.</span><span class="add">- If you write a new solver script for Level 4, **do not have it execute actions inline**. Instead, have it `print()` the optimal `(x, y)` coordinate sequence to `stdout` so you can verify its logic.</span><span class="add">- Once you have the printed sequence from your tool, manually execute it from the main prompt using your safe 1-2 action batching method to guarantee successful progression without triggering the JSON overwrite bug.</span></pre></div><div class="produced"><span class="arrow">→ produced</span><code class="skill">probe_button</code><code class="skill">solve_lvl4</code><code class="skill">execute_path_lvl4</code></div></div></div><div class="ms k-up"><div class="ms-rail"><span class="dot"></span></div><div class="ms-body"><div class="ms-meta"><span class="lvbadge">level 5</span><span class="kind k-up">level-up</span><span class="act">action 257</span></div><div class="ms-head">Lock the execution protocol</div><div class="ms-detail">Submit one action at a time via a Python loop — fixes a batch-submission bug.</div><div class="raw-evo"><div class="raw-evo-head">original harness evolution output <span class="raw-passes">prompt / skills / subagents / memory</span></div><pre class="raw-evo-body">[generation 7 · prompt pass]
+# IMPROVED BASE PROMPT
+
+## Discovered Game Rules &amp; Mechanics
+- **Core Goal &amp; Color Matching (Confidence 5/5):** To score a point and fill one of the top progress dashes, use the arrows to rotate the tracks until ALL solid colored 2x2 blocks are simultaneously positioned inside their matching hollow 4x4 cursors. (Ref: mem_002)
+- **Target Coordinates (Confidence 5/5):** A correctly matched block sits entirely inside the cursor. The exact top-left corner of the solid block must equal `(cursor_x + 1, cursor_y + 1)`.
+- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on colored arrow buttons rotates the adjacent track of blocks. Historically, green arrows rotate a track in one direction and red arrows rotate it in the opposite direction. Intersecting loops can transfer blocks between them. (Ref: mem_001)
+- **Strict Move Limit (Confidence 5/5):** Levels have a hard action cap, visually tracked by a vertical line drawing downwards on the far left edge of the grid (x=0) where a pixel changes color (e.g., 14 to 5) for every valid move. Exceeding this limit before solving the level results in an immediate GAME_OVER. Aimless exploration is fatal. (Ref: mem_003)
+- **Historical Level Track Layouts (Confidence 5/5):** Every level introduces a completely new track layout.
+  - Level 1: A single loop. (Ref: mem_001)
+  - Level 2: A rectangular loop intersected by two horizontal tracks. (Ref: mem_004)
+  - Level 3: Two interlocking circular tracks.
+  - Level 4: Four separate, non-overlapping cross-shaped tracks. (Ref: mem_008)
+- **Open Hypothesis (Confidence 1/5):** As track shapes become more complex in higher levels, it is unconfirmed if blocks of different colors collide or block each other on the same track. Assume they do not collide unless proven otherwise.
+
+## 🚨 CRITICAL BUG &amp; YOUR SUCCESSFUL WORKAROUND 🚨
+- **JSON BATCH OVERWRITE BUG (Confidence 5/5):** Submitting multiple actions in a single VLM output or a single `tools.take_actions(actions=[A, B, C])` array causes queued actions to be overwritten by the last action, resulting in duplicate garbage and wasted moves. (Ref: mem_006)
+- **The Perfect Solution (Proven on Level 4):** You successfully bypassed this bug by writing the `execute_path_lvl4` Python skill! By hardcoding your optimal path in a list and calling `tools.take_actions(actions=[one_action])` one at a time **inside a Python loop** (and checking `resp.terminal` and `resp.level_changed` after each call), you were able to automatically and safely execute an 11-move sequence. **Always use this exact Python loop strategy to execute multi-step solutions.**
+
+## Current Objective: Level 5 Strategy (Score 4)
+Congratulations on brilliantly mapping, solving, and auto-executing Level 4! Your score has increased to 4, and Level 5 has appeared with a completely new track layout.
+
+**Step 1: Map the New Grid**
+- Run your existing `check_all_targets` skill to identify all hollow cursors and solid 2x2 blocks on the new grid.
+- Observe the layout carefully. How many tracks are there? Do they intersect?
+
+**Step 2: Safely Reverse-Engineer Mechanics**
+- Run your `probe_button` skill on the new arrow buttons to understand how this level&#x27;s tracks permute. 
+- Because moves are strictly limited (watch the x=0 line), only take physical actions through your probing skills to gather the exact block-shifting logic necessary to build a solver.
+
+**Step 3: Build Solver &amp; Auto-Execute**
+- Do NOT run your previous solver scripts (`solve_lvl3_bfs`, `solve_lvl4`) as they are hardcoded for past geometries.
+- Write a new `solve_lvl5` script to perform a BFS/A* search based on your findings from the button probing.
+- Once you have the optimal path, create an `execute_path_lvl5` skill (mirroring `execute_path_lvl4`) to run the sequence via a safe, one-action-at-a-time Python loop. 
+
+**Programming Rule:** In any engine-driving skill, ALWAYS verify `if resp.terminal or resp.level_changed:` after every single `take_actions` call to prevent your loop from blindly firing actions into a Game Over or a newly loaded level.
+
+[generation 7 · skills pass]
+{
+  &quot;analysis&quot;: &quot;The agent successfully leveled up to level 5. The skill `execute_path_lvl4` is a hardcoded sequence of moves specific to level 4 and is no longer useful. I will delete it to keep the skill library clean, while preserving the solver skills as templates for future levels.&quot;,
+  &quot;add&quot;: [],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: [&quot;execute_path_lvl4&quot;]
+}
+
+[generation 7 · subagents pass]
+{
+  &quot;analysis&quot;: &quot;The orchestrator has shifted entirely to using programmatic Python skills (via process_skill/run_skill) to probe buttons, map permutations, and execute action sequences safely (e.g., probe_button, solve_lvl4, execute_path_lvl4). As a result, the manual exploration and execution subagents (explore_mechanics and execute_sequence) are completely bypassed and unused. They should be deleted to streamline the registry.&quot;,
+  &quot;add&quot;: [],
+  &quot;edit&quot;: [],
+  &quot;delete&quot;: [
+    &quot;subagent_002&quot;,
+    &quot;subagent_006&quot;
+  ]
+}
+
+[generation 7 · memory pass]
+{
+  &quot;analysis&quot;: &quot;The agent successfully mapped and cleared Level 4, demonstrating that each cross track allows transferring blocks between its perpendicular segments via a shared intersection block. Upon clearing, the game advanced to score 4 (Level 5). Memory 008 is updated to include the validated cross mechanics, and a new entry is added for the initial observation of Level 5&#x27;s continuous layout.&quot;,
+  &quot;add&quot;: [
+    {
+      &quot;title&quot;: &quot;Level 5 Track Layout&quot;,
+      &quot;body&quot;: &quot;Level 5 (reached at score 4) features a continuous, winding snake-like track composed of alternating horizontal and vertical segments. Pairs of red and green control arrows are placed on multiple horizontal sections to shift blocks along the unified path.&quot;,
+      &quot;tags&quot;: [&quot;layout&quot;, &quot;level5&quot;],
+      &quot;confidence&quot;: 2
+    }
+  ],
+  &quot;edit&quot;: [
+    {
+      &quot;id&quot;: &quot;mem_008&quot;,
+      &quot;title&quot;: &quot;Level 4 Layout and Mechanics&quot;,
+      &quot;body&quot;: &quot;Level 4 (reached at score 3) features four separate, non-overlapping cross-shaped tracks arranged in a 2x2 grid. Each cross has red arrows on its left/bottom ends and green arrows on its top/right ends. Shifting a row or column moves blocks through the cross&#x27;s shared central intersection, allowing blocks to be transferred between perpendicular segments.&quot;,
+      &quot;tags&quot;: [&quot;layout&quot;, &quot;mechanics&quot;, &quot;level4&quot;],
+      &quot;confidence&quot;: 5
+    }
+  ],
+  &quot;delete&quot;: []
+}</pre></div><div class="evo"><div class="evo-head">accepted rewritten policy (new lines highlighted)</div><pre class="evo-body"><span># IMPROVED BASE PROMPT</span><span class="blank"></span><span>## Discovered Game Rules &amp; Mechanics</span><span>- **Core Goal &amp; Color Matching (Confidence 5/5):** To score a point and fill one of the top progress dashes, use the arrows to rotate the tracks until ALL solid colored 2x2 blocks are simultaneously positioned inside their matching hollow 4x4 cursors. (Ref: mem_002)</span><span>- **Target Coordinates (Confidence 5/5):** A correctly matched block sits entirely inside the cursor. The exact top-left corner of the solid block must equal `(cursor_x + 1, cursor_y + 1)`.</span><span class="add">- **Movement Mechanics &amp; Controls (Confidence 5/5):** Clicking (`ACTION6(x, y)`) on colored arrow buttons rotates the adjacent track of blocks. Historically, green arrows rotate a track in one direction and red arrows rotate it in the opposite direction. Intersecting loops can transfer blocks between them. (Ref: mem_001)</span><span class="add">- **Strict Move Limit (Confidence 5/5):** Levels have a hard action cap, visually tracked by a vertical line drawing downwards on the far left edge of the grid (x=0) where a pixel changes color (e.g., 14 to 5) for every valid move. Exceeding this limit before solving the level results in an immediate GAME_OVER. Aimless exploration is fatal. (Ref: mem_003)</span><span class="add">- **Historical Level Track Layouts (Confidence 5/5):** Every level introduces a completely new track layout.</span><span class="add">  - Level 1: A single loop. (Ref: mem_001)</span><span class="add">  - Level 2: A rectangular loop intersected by two horizontal tracks. (Ref: mem_004)</span><span class="add">  - Level 3: Two interlocking circular tracks.</span><span class="add">  - Level 4: Four separate, non-overlapping cross-shaped tracks. (Ref: mem_008)</span><span>- **Open Hypothesis (Confidence 1/5):** As track shapes become more complex in higher levels, it is unconfirmed if blocks of different colors collide or block each other on the same track. Assume they do not collide unless proven otherwise.</span><span class="blank"></span><span class="add">## 🚨 CRITICAL BUG &amp; YOUR SUCCESSFUL WORKAROUND 🚨</span><span class="add">- **JSON BATCH OVERWRITE BUG (Confidence 5/5):** Submitting multiple actions in a single VLM output or a single `tools.take_actions(actions=[A, B, C])` array causes queued actions to be overwritten by the last action, resulting in duplicate garbage and wasted moves. (Ref: mem_006)</span><span class="add">- **The Perfect Solution (Proven on Level 4):** You successfully bypassed this bug by writing the `execute_path_lvl4` Python skill! By hardcoding your optimal path in a list and calling `tools.take_actions(actions=[one_action])` one at a time **inside a Python loop** (and checking `resp.terminal` and `resp.level_changed` after each call), you were able to automatically and safely execute an 11-move sequence. **Always use this exact Python loop strategy to execute multi-step solutions.**</span><span class="blank"></span><span class="add">## Current Objective: Level 5 Strategy (Score 4)</span><span class="add">Congratulations on brilliantly mapping, solving, and auto-executing Level 4! Your score has increased to 4, and Level 5 has appeared with a completely new track layout.</span><span class="blank"></span><span class="add">**Step 1: Map the New Grid**</span><span class="add">- Run your existing `check_all_targets` skill to identify all hollow cursors and solid 2x2 blocks on the new grid.</span><span class="add">- Observe the layout carefully. How many tracks are there? Do they intersect?</span><span class="blank"></span><span class="add">**Step 2: Safely Reverse-Engineer Mechanics**</span><span class="add">- Run your `probe_button` skill on the new arrow buttons to understand how this level&#x27;s tracks permute. </span><span class="add">- Because moves are strictly limited (watch the x=0 line), only take physical actions through your probing skills to gather the exact block-shifting logic necessary to build a solver.</span><span class="blank"></span><span class="add">**Step 3: Build Solver &amp; Auto-Execute**</span><span class="add">- Do NOT run your previous solver scripts (`solve_lvl3_bfs`, `solve_lvl4`) as they are hardcoded for past geometries.</span><span class="add">- Write a new `solve_lvl5` script to perform a BFS/A* search based on your findings from the button probing.</span><span class="add">- Once you have the optimal path, create an `execute_path_lvl5` skill (mirroring `execute_path_lvl4`) to run the sequence via a safe, one-action-at-a-time Python loop. </span><span class="blank"></span><span class="add">**Programming Rule:** In any engine-driving skill, ALWAYS verify `if resp.terminal or resp.level_changed:` after every single `take_actions` call to prevent your loop from blindly firing actions into a Game Over or a newly loaded level.</span></pre></div></div></div>
+  </div>
+  <div class="outcome"><b>Outcome.</b> After the method is compiled, levels 4–8 clear at near-maximum credit in 14, 21, 22, 11, and 34 actions — final score 100.0 (8/8) in 344 actions.</div>
+</div></body></html>

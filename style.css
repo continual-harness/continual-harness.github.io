@@ -1,0 +1,192 @@
+/* Continual Harness blog — warm editorial reading theme.
+   Cream paper, high-contrast display serif (Playfair Display) for headings,
+   a warm reading serif (Spectral) for prose, letter-spaced uppercase eyebrows,
+   thin warm hairlines, and a terracotta accent. Data-encoding colors (blue = CH,
+   orange = Hermes) are kept so the page agrees with the figure PNGs. */
+:root{
+  /* warm neutrals */
+  --bg:#f4f0e7;            /* page: warm ivory */
+  --paper:#fbf8f1;         /* cards / surfaces: warm off-white */
+  --soft:#efe9db;          /* soft fills (table head, panels) */
+  --code-bg:#ece4d3;       /* inline + block code */
+  --ink:#211c15;           /* headings: warm near-black */
+  --body:#3c352b;          /* body text: warm dark brown-grey */
+  --muted:#8d8472;         /* captions / meta: warm taupe */
+  --line:#dcd2bf;          /* hairlines: warm taupe line */
+  --line-soft:#e7dfce;
+  /* accent + data colors */
+  --accent:#b3552e;        /* terracotta: links, eyebrows, buttons */
+  --accent-deep:#8f3f1f;
+  --blue:#2b5d8a;          /* CH (matches figures) */
+  --blue-bg:#e8eef6;
+  --violet:#7c5cc4;
+  --orange:#c2410c;        /* Hermes (matches figures) */
+  /* type */
+  --display:"Playfair Display",Georgia,"Times New Roman",serif;  /* titles only */
+  /* main text + labels: Roboto (sans), with system-sans fallbacks */
+  --serif:"Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --sans:"Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --label:"Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --byline:"Spectral","Iowan Old Style",Charter,Georgia,Cambria,"Times New Roman",serif;  /* author list */
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --measure:1240px;        /* media / page column cap */
+  --text:50rem;            /* prose line-length cap (~editorial measure) */
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--body);
+  font-family:var(--serif); font-size:21px; line-height:1.72;
+  font-feature-settings:"liga" 1,"kern" 1;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---- reading column: media spans this; prose is capped to --text for measure ---- */
+.content{width:clamp(680px,76vw,var(--measure)); max-width:100%; margin:0 auto;
+  padding:64px 26px 88px; counter-reset:section;}
+.status{color:var(--muted); font-family:var(--label);}
+.status.error{color:var(--orange); border:1px solid #e6c3a8; background:#f7ece0;
+  padding:14px 16px; border-radius:10px; line-height:1.55;}
+
+/* ---- title block ---- */
+.authors{font-family:var(--byline); font-size:20px; font-weight:600; color:var(--ink);
+  margin:.7em 0 .14em; line-height:1.45;}
+.authors a{color:var(--accent);}
+.affiliation{font-family:var(--byline); font-size:17px; font-style:italic; color:var(--muted);
+  margin:0 0 1.1em;}
+
+/* ---- title action buttons (paper / code / scorecard) ---- */
+.btn-row{display:flex; flex-wrap:wrap; gap:11px; margin:.7em 0 1.5em;}
+.btn{display:inline-block; font-family:var(--label); font-size:12.5px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.12em; color:var(--ink); background:transparent;
+  border:1px solid var(--line); border-radius:8px; padding:9px 16px; text-decoration:none;
+  transition:border-color .15s,color .15s,background .15s;}
+.btn:hover{border-color:var(--accent); color:var(--accent); background:var(--paper);}
+.btn:active{transform:translateY(1px);}
+.btn[aria-disabled="true"]{color:var(--muted); border-style:dashed; cursor:default;
+  pointer-events:none;}
+
+/* ---- headings ---- */
+h1,h2,h3{font-family:var(--display); color:var(--ink); font-weight:600;
+  line-height:1.12; margin:1.5em 0 .42em; letter-spacing:.1px;}
+h1{font-size:clamp(44px,6.4vw,76px); font-weight:700; letter-spacing:-.4px;
+  margin:.05em 0 .3em; line-height:1.06;}
+h2{font-size:clamp(30px,3.6vw,40px); margin-top:2.2em; padding-top:1.05em;
+  border-top:1px solid var(--line); counter-increment:section;}
+/* "§ N" editorial eyebrow above each top-level section */
+h2::before{content:"§ " counter(section); display:block; font-family:var(--label);
+  font-size:12.5px; font-weight:600; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:.7em;}
+h3{font-size:clamp(24px,2.4vw,28px); margin-top:1.7em;}
+/* "####" subsection headers -> warm uppercase eyebrow */
+h4{font-family:var(--label); color:var(--accent); font-size:14px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.14em; margin:2em 0 .7em;}
+h4 strong{font-weight:700; color:inherit;}
+
+p{margin:0 0 1.05em;}
+a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(179,85,46,.32);}
+a:hover{border-bottom-color:var(--accent);}
+strong{color:var(--ink); font-weight:600;}
+small{font-size:.8em; color:var(--muted);}
+hr{border:none; border-top:1px solid var(--line); margin:2.4em 0; max-width:var(--text);}
+ul,ol{padding-left:1.2em;}
+li{margin:.3em 0;}
+li::marker{color:var(--accent);}
+blockquote{margin:1.4em 0; padding:.2em 0 .2em 1.1em; border-left:3px solid var(--line);
+  color:var(--muted); font-style:italic;}
+
+/* ---- code ---- */
+code{font-family:var(--mono); font-size:.8em; background:var(--code-bg);
+  padding:1.5px 5px; border-radius:4px; color:#6a4a30;}
+pre{background:var(--paper); border:1px solid var(--line); border-radius:9px;
+  padding:15px 17px; overflow:auto; box-shadow:0 1px 2px rgba(60,40,20,.04);}
+pre code{background:none; padding:0; color:var(--body); font-size:15px;}
+
+/* ---- table (GFM); app.js wraps in .table-wrap for horizontal scroll ---- */
+.table-wrap{overflow-x:auto; margin:1.7em 0;}
+table{border-collapse:collapse; width:100%; font-family:var(--serif); font-size:17px;}
+th,td{border:1px solid var(--line); padding:10px 13px; text-align:left; vertical-align:top;}
+thead th{background:var(--soft); color:var(--ink); font-weight:600; font-family:var(--label);
+  font-size:13px; text-transform:uppercase; letter-spacing:.06em;}
+tbody tr:nth-child(even){background:#f7f2e7;}
+
+/* ---- figures (images wrapped by app.js) ---- */
+figure{margin:2.1em 0; text-align:center;}
+figure img{width:100%; max-width:100%; height:auto; border:1px solid var(--line);
+  border-radius:8px; background:var(--paper);}
+figcaption{font-family:var(--label); font-size:14.5px; color:var(--muted); margin-top:.8em;
+  line-height:1.5; text-align:left;}
+figcaption strong,figcaption b{color:var(--ink); font-weight:600;}
+
+/* Transparent SVG figures (e.g. the leaderboard scatter) blend into the page:
+   drop the card border/backing so the cream background shows through the panel. */
+figure img[src*="leaderboard_cost_score"]{border:none; border-radius:0; background:none;}
+
+/* score comparison + level heatmap, scaled to fit within the text column.
+   Each figure's flex-grow is its aspect ratio (w/h), so proportional widths yield
+   matched heights while the pair fills exactly the content width (no breakout). */
+.figure-row{display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start;
+  justify-content:center; margin:2.1em 0; width:100%;}
+.figure-row figure{margin:0; min-width:0; flex:1 1 0;}
+.figure-row figure:has(img[src*="score_comparison"]){flex-grow:.924;}
+.figure-row figure:has(img[src*="level_progression_heatmaps"]){flex-grow:1.191;}
+.figure-row figure img{width:100%; height:auto; max-width:100%;}
+.figure-row figcaption{width:0; min-width:100%; max-width:none;}
+
+/* ---- embeds ---- */
+.embed{margin:2.3em 0;}
+.embed-caption{font-family:var(--label); font-size:14.5px; color:var(--muted);
+  margin-top:.85em; line-height:1.55;}
+.embed-caption b{color:var(--ink); font-weight:600;}
+.embed-caption code{font-size:13px;}
+
+/* Two figures stacked vertically under a single shared caption. */
+.figure-stack{display:flex; flex-direction:column; gap:16px;}
+.figure-stack img{width:100%; max-width:100%; height:auto; border:1px solid var(--line);
+  border-radius:8px; background:var(--paper);}
+
+.iframe-wrap{border:1px solid var(--line); border-radius:13px; overflow:hidden;
+  background:var(--soft);
+  box-shadow:0 1px 2px rgba(60,40,20,.05),0 10px 30px rgba(60,40,20,.07);}
+.iframe-wrap iframe{display:block; width:100%; border:0;}
+.iframe-wrap.scroll-artifact iframe{height:clamp(560px,72vh,760px);}
+
+.video-grid{display:grid; gap:18px;}
+.video-grid.cols-2{grid-template-columns:repeat(2,1fr);}
+.video-grid.cols-3{grid-template-columns:repeat(3,1fr);}
+.video-card{margin:0;}
+.video-card video{width:100%; height:auto; display:block; border:1px solid var(--line);
+  border-radius:10px; background:#1c1712;}
+.video-card figcaption{margin-top:.55em; text-align:center; font-size:14px;}
+.video-card .agent{font-weight:600; font-family:var(--label); color:var(--ink);
+  letter-spacing:.02em;}
+.video-card .agent.ch{color:var(--blue);}
+.video-card .agent.hermes{color:var(--orange);}
+
+.play-both{font-family:var(--label); font-size:12px; font-weight:700; cursor:pointer;
+  text-transform:uppercase; letter-spacing:.12em; color:var(--accent); background:transparent;
+  border:1px solid var(--accent); border-radius:7px; padding:8px 15px; margin:2px 0 14px;
+  transition:background .15s,color .15s;}
+.play-both:hover{background:var(--accent); color:#fff;}
+.play-both:active{transform:translateY(1px);}
+
+.artifact-stub{font-family:var(--label); border:1px dashed #cdbfa3; border-radius:11px;
+  background:repeating-linear-gradient(-45deg,#faf6ec,#faf6ec 11px,#f1ead9 11px,#f1ead9 22px);
+  padding:20px 18px; color:#6f6552;}
+.artifact-stub .tag{display:inline-block; font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.1em; color:var(--accent); border:1px solid var(--accent);
+  border-radius:11px; padding:1px 9px; margin-bottom:8px;}
+.artifact-stub .title{font-weight:700; color:var(--ink); font-size:17px;}
+.artifact-stub .desc{font-size:16px; margin-top:5px; line-height:1.5;}
+
+/* ---- responsive ---- */
+@media (max-width:900px){
+  .figure-row{flex-direction:column; align-items:stretch;}
+  .figure-row figure img{height:auto; width:100%;}
+  .figure-row figcaption{max-width:none;}
+}
+@media (max-width:700px){
+  body{font-size:19px;}
+  .content{width:92vw; padding:40px 4vw 56px;}
+  .video-grid.cols-2,.video-grid.cols-3{grid-template-columns:1fr;}
+}

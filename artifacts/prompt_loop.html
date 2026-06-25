@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Example of Continual Harness decision loop</title>
+<style>
+:root{
+  --ink:#211c15; --muted:#8d8472; --line:#dcd2bf; --panel:#f6f1e6;
+  --blue:#2b5d8a; --blue-bg:#e8eef6; --violet:#7c5cc4; --violet-bg:#efe9f7;
+  --teal:#0f9d8f; --teal-bg:#e4f1ec; --green:#2e7d46; --green-bg:#e7efe1;
+  --orange:#c2410c; --orange-bg:#f7ece0; --subv:#6f58a8;
+  --cached:#cfc6b3; --fresh:#2b5d8a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#f4f0e7;color:var(--ink);font-size:15px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+.wrap{max-width:none;margin:18px auto;padding:0 20px;}
+.title{font-size:21px;font-weight:800;letter-spacing:.1px;}
+.sub{color:var(--muted);font-size:14px;margin-top:3px;}
+.takeaway{font-size:15.5px;line-height:1.55;margin:13px 0 11px;color:#3c352b;}
+.takeaway code{background:var(--blue-bg);color:var(--blue);padding:1px 5px;border-radius:4px;font-size:14px;}
+.legend{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:12px;font-size:12.5px;}
+.lg{padding:3px 10px;border-radius:20px;border:1px solid var(--line);color:var(--muted);}
+.lg.k-skill{color:var(--violet);border-color:var(--violet);}
+.lg.k-refine{color:var(--blue);border-color:var(--blue);}
+.lg.k-subagent{color:var(--subv);border-color:var(--subv);}
+.lg.k-act{color:var(--orange);border-color:var(--orange);}
+.lg.cached-key{color:var(--cached);} .lg.fresh-key{color:var(--fresh);}
+
+.panel{background:#fbf8f1;border:1px solid var(--line);border-radius:12px;overflow:hidden;
+  box-shadow:0 1px 2px rgba(60,40,20,.05),0 8px 24px rgba(60,40,20,.06);}
+.bar{display:flex;align-items:center;gap:7px;padding:10px 16px;background:#efe9db;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);}
+.dot{width:12px;height:12px;border-radius:50%;}
+.dot.r{background:#ec6a5e}.dot.y{background:#f4bf4f}.dot.g{background:#61c454}
+.bar .file{margin-left:8px;font-family:ui-monospace,Menlo,Consolas,monospace;color:#6a6150;}
+.scroll{max-height:660px;overflow-y:auto;padding:16px;background:var(--panel);scroll-behavior:smooth;}
+
+.prefix{border:1px dashed #cdbfa3;border-radius:10px;background:repeating-linear-gradient(
+  -45deg,#faf6ec,#faf6ec 10px,#f1ead9 10px,#f1ead9 20px);padding:11px 13px;margin-bottom:7px;}
+.lock{font-size:13.5px;color:#6f6552;font-weight:600;margin-bottom:7px;letter-spacing:.2px;}
+
+.fold{border:1px solid var(--line);border-radius:8px;background:#fbf8f1;margin:7px 0;}
+.fold>summary{cursor:pointer;list-style:none;padding:9px 12px;font-size:15px;font-weight:600;
+  color:#4a4232;display:flex;align-items:center;gap:8px;}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::before{content:"\25B8";color:var(--muted);font-size:12px;transition:transform .15s;}
+.fold[open]>summary::before{transform:rotate(90deg);}
+.fold-body{padding:3px 14px 13px;border-top:1px solid #e7dfce;}
+.chip{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+  border:1px solid var(--line);border-radius:10px;padding:2px 9px;font-weight:700;}
+
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.55;
+  white-space:pre-wrap;word-break:break-word;color:#43412f;margin:9px 0 0;}
+pre.mono{max-height:280px;overflow:auto;background:#f6f1e6;border:1px solid #e7dfce;
+  border-radius:6px;padding:11px 13px;}
+.mono.small{font-size:12.5px;line-height:1.5;}
+
+.turn{display:grid;grid-template-columns:118px 1fr;gap:14px;margin:14px 0;padding-top:14px;
+  border-top:1px solid #e7dfce;}
+.turn:first-of-type{border-top:none;}
+.turn-rail{text-align:right;padding-top:2px;}
+.tnum{display:block;font-weight:700;font-size:15px;color:#4a4232;}
+.tlabel{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.turn-body{border-left:3px solid var(--line);padding-left:15px;}
+.turn.assemble .turn-body{border-left-color:var(--blue);}
+.turn.append .turn-body{border-left-color:#d8cdb8;}
+.turn.act .turn-body{border-left-color:var(--orange);}
+
+.assemble-tag{font-size:13px;color:var(--blue);font-weight:700;margin-bottom:8px;}
+.append-tag{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:8px;}
+.append-tag.act-tag{color:var(--orange);font-weight:700;}
+
+.working{border:1px solid var(--line);border-radius:9px;background:#fbf8f1;padding:10px 12px;margin-bottom:10px;}
+.working-head{font-size:13.5px;color:var(--blue);font-weight:700;margin-bottom:7px;}
+.stores{list-style:none;margin:0 0 5px;padding:0;display:grid;gap:6px;}
+.stores li{font-size:14px;border:1px solid #e7dfce;border-radius:6px;padding:8px 11px;background:#f7f2e7;}
+.store-count{color:var(--muted);font-weight:400;margin-left:4px;}
+.store-detail{color:#6f6552;font-size:12.5px;margin-top:4px;line-height:1.45;
+  font-family:ui-monospace,Menlo,Consolas,monospace;max-height:60px;overflow:hidden;}
+
+.obs{display:flex;gap:15px;align-items:flex-start;padding-top:7px;}
+canvas.grid{image-rendering:pixelated;border:1px solid #cdbfa3;border-radius:4px;
+  width:248px;height:248px;background:#333;flex:none;}
+.obs-note{font-size:14px;color:var(--muted);line-height:1.55;}
+.grid-ascii{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;line-height:1.25;
+  white-space:pre;overflow:auto;max-height:320px;margin:11px 0 0;padding:11px 13px;
+  background:#1f1a13;color:#c7bca6;border:1px solid #cdbfa3;border-radius:5px;}
+
+.meter{height:11px;border-radius:6px;overflow:hidden;display:flex;background:#e7dfce;
+  border:1px solid #ddd3c0;margin:3px 0 2px;}
+.seg{display:block;height:100%;}
+.seg.cached{background:var(--cached);}
+.seg.fresh{background:var(--fresh);}
+.meter-note{font-size:12.5px;color:var(--muted);margin-bottom:9px;font-family:ui-monospace,Menlo,Consolas,monospace;}
+
+.call,.result{font-size:15px;margin:7px 0;line-height:1.55;}
+.who{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  background:var(--blue);color:#fff;border-radius:4px;padding:2px 7px;margin-right:7px;}
+.who.res{background:#9c9484;}
+.arrow{color:var(--muted);margin-right:6px;}
+code.tool{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;font-size:14.5px;}
+.call-arg{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;color:#6a6150;}
+.k-skill code.tool{color:var(--violet);} .k-skill .who{background:var(--violet);}
+.k-refine code.tool{color:var(--blue);}
+.k-subagent code.tool{color:var(--subv);} .k-subagent .who{background:var(--subv);}
+.k-act code.tool{color:var(--orange);} .k-act .who{background:var(--orange);}
+.k-read code.tool{color:#6a6150;}
+.reasoning{color:#6f6552;font-style:italic;font-size:14px;margin:4px 0 0 4px;
+  padding-left:11px;border-left:2px solid #e7dfce;line-height:1.5;}
+code.preview{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:#6a6150;
+  background:#ece4d3;border-radius:4px;padding:3px 7px;display:inline-block;line-height:1.55;
+  max-width:100%;word-break:break-word;}
+.foot{font-size:13px;color:var(--muted);margin-top:11px;line-height:1.55;}
+</style></head>
+<body><div class="wrap">
+  <div class="title">Example of Continual Harness decision loop</div>
+  <div class="sub">lp85-305b61c3 &middot; decision @ action 13 &middot; conversation #8 &middot; 8 VLM turns &middot; real <code style="font-family:ui-monospace,monospace">trace.jsonl</code></div>
+  <p class="takeaway">One decision = one conversation of multiple VLM turns. Turn 0 assembles the full prompt; the next 7 turns append only their new tool result (the cached prefix carries the rest), until <code>take_actions</code> changes the game state and closes the conversation.</p>
+  <div class="legend"><span class="lg k-skill">run_skill</span><span class="lg k-refine">process_* (refine)</span><span class="lg k-subagent">run_subagent</span><span class="lg k-act">take_actions (state change)</span><span class="lg cached-key">&#9608; cached prefix</span><span class="lg fresh-key">&#9608; new this turn</span></div>
+  <div class="panel">
+    <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="file">conversation #8 — scroll to follow the turns</span></div>
+    <div class="scroll">
+      <div class="prefix"><div class="lock">&#128274; frozen prefix &middot; assembled once &middot; cached for every turn below</div><details class="fold"><summary><span class="chip">system</span>System prompt (fixed — never evolved)</summary><div class="fold-body"><p class="mono">You are playing lp85-305b61c3, a game never seen before with NO wiki and NO rules provided. You must learn game rules through observation and store them in memory, while playing efficiently. &hellip;</p></div></details><details class="fold"><summary><span class="chip">policy</span>Policy (evolvable — owned by the refiner)</summary><div class="fold-body"><pre class="mono"># STRATEGIC GUIDANCE
+
+## Rule Discovery
+This game has UNKNOWN rules you must discover through observation. No game you have been trained on matches this one — do NOT assume familiar mechanics (Sokoban, maze, snake, etc.). Watch how the grid changes after each action and build hypotheses from evidence, not preconceptions.
+
+## Analysis Approach
+- Compare grid states before and after each action to identify what changed
+- Look for patterns: which cells move, which stay fixed, what correlates with score increases or GAME_OVER
+- Identify objects (connected regions of the same color), boundaries, goals
+- Note which action types produce which effects — map the full action space
+- Record each finding in memory as a small fact with a calibrated confidence (1=untested guess ... 5=repeatedly confirmed); raise confidence only after re-confirmation, lower or delete when contradicted
+
+## Play Strategy
+- Start each level by observing the grid carefully before acting, and then use 1-2 exploratory actions to test hypotheses about unknown mechanics
+- Understand the rules as if you are reverse engineering the game from observations
+- Use tools in balance: memory for confirmed or contradicted facts, skills for reusable domain techniques, and subagents for bounded analysis when the next action is unclear
+- Once rules are understood, save it to memory and execute the solution efficiently with minimal steps
+- If stuck, try actions you haven&#x27;t tested yet rather than repeating failures
+
+## Level Transitions
+All levels in a game share the SAME underlying rule. When you advance to a new level, review your memory: apply confidence 4-5 rules immediately — do not re-explore what is already confirmed — and re-test confidence 1-2 hypotheses cheaply before relying on them. Adapt the known strategy to the new level&#x27;s specific layout.
+
+---
+
+*This block is updated over time by the evolution loop.*</pre></div></details></div>
+      <section class="turn assemble"><div class="turn-rail"><span class="tnum">turn 0</span><span class="tlabel">prompt assembly</span></div><div class="turn-body"><div class="assemble-tag">state-changing boundary &rarr; full working prompt assembled once</div><div class="working"><div class="working-head">working prompt &mdash; built fresh for this decision</div><ul class="stores"><li><b>SUBAGENTS</b><span class="store-count">(0 saved)</span><div class="store-detail">No subagents saved yet. Use process_subagent(operation=&quot;add&quot;, name=..., description=..., system_instructions=..., directive=..., handler_type=&quot;looping&quot;|&quot;one_step&quot;, max_turns=..., allowed_tools=[...]) to register a focused inner agent for a complex task. If allowed_tools is omitted, it defaults to an empty allowlist (re</div></li><li><b>LONG-TERM MEMORY</b><span class="store-count">(1 entries)</span><div class="store-detail">[cN] = confidence: 1=untested guess ... 5=repeatedly confirmed [mem_001][c5] Basic Layout and Controls (layout, mechanics): Loop of 20 4x4 blocks. Green arrow (x=58, y=34) rotates loop clockwise 1 step. Red arrow (x=5, y=32) rotates counter-clockwise. Yellow hollow cursor surrounds top-left block. One solid yellow bloc</div></li><li><b>SKILLS</b><span class="store-count">(2 saved)</span><div class="store-detail">[skill_001] analyze_loop: Reads the colors of the blocks in the loop and finds the cursor.... [skill_002] eval_python: eval python...</div></li></ul><details class="fold"><summary>Recent history</summary><div class="fold-body"><pre class="mono small">══ Level 1 — started at step 1 ══
+[take_actions] step 1  ACTION6(x=58, y=34) → 293 cells changed: color f→2 (×48): r25-46 c12-51; color 2→1 (×32): r19-40 c12-21; color 9→a (×32): r19-46 c30-33; color a→f (×32): r25-46 c12-39; color 1→a (×16): r19-22 c12-15; color a→2 (×16): r19-22 c24-27; +8 more
+[take_actions] step 2  ACTION6(x=5, y=32) → 293 cells changed: color 2→f (×48): r25-46 c12-51; color 1→2 (×32): r19-40 c12-21; color a→9 (×32): r19-46 c30-33; color f→a (×32): r25-46 c12-39; color a→1 (×16): r19-22 c12-15; color 2→a (×16): r19-22 c24-27; +8 more
+[take_actions] steps 3-5  ACTION6(x=44, y=21) ×3 → no change
+[take_actions] step 6  ACTION6(x=13, y=20) → no change
+[take_actions] step 7  ACTION6(x=12, y=1) → no change
+[take_actions] step 8  ACTION6(x=43, y=20) → no change
+[take_actions] step 9  ACTION6(x=5, y=32) → 293 cells changed: color 2→f (×48): r19-46 c12-51; color 1→2 (×32): r19-46 c12-15; color a→9 (×32): r19-46 c24-39; color f→a (×32): r31-46 c12-45; color 2→a (×16): r19-22 c18-21; color 9→f (×16): r19-22 c30-33; +8 more
+[take_actions] step 10  ACTION6(x=5, y=32) → 293 cells changed: color 2→f (×48): r19-46 c12-51; color a→9 (×32): r19-46 c18-45; color 1→2 (×32): r25-46 &hellip;</pre></div></details><details class="fold" open><summary>Observation — 5 frames + 64×64 grid</summary><div class="fold-body"><div class="obs"><canvas class="grid" width="256" height="256" data-rows='["5333333333333333333333333333333333333333333333333333333333333333", "5333333333555535555355553555535555355553555535555333333333333333", "5333333333333333333333333333333333333333333333333333333333333333", "5333333333333333333333333333333333333333333333333333333333333333", "5333333333333333333333333333333333333333333333333333333333333333", "5333333333333333333333333333333333333333333333333333333333333333", "5333333333333333333333333333333333333333333333333333333333333333", "5333333333333333333333333333333333333333333333333333333333333333", "5333333333333333333333333333333333333333333333333333333333333333", "5333333333333333333333333333333333333333333333333333333333333333", "5333333333333333333333333333333333333333333333333333333333333333", "5333333333333333333333333333333333333333333333333333333333333333", "5333333333333333333333333333333333333333333333333333333333333333", "5444444444444444444444444444444444444444444444444444444444444444", "5444444444444444444444444444444444444444444444444444444444444444", "5444444444444444444444444444444444444444444444444444444444444444", "5444444444444444444444444444444444444444444444444444444444444444", "5444444444bb4444bb4444444444444444444444444444444444444444444444", "5444444444bb4444bb4444444444444444444444444444444444444444444444", "544444444444ffff44bbbb44222244ffff44999944aaaa442222444444444444", "544444444444ffff44bbbb44222244ffff44999944aaaa442222444444444444", "544444444444ffff44bbbb44222244ffff44999944aaaa442222444444444444", "544444444444ffff44bbbb44222244ffff44999944aaaa442222444444444444", "5444444444bb4444bb4444444444444444444444444444444444444444444444", "5444444444bb4444bb4444444444444444444444444444444444444444444444", "544444444444999944444444444444444444444444444444ffff444444444444", "544444444444999944444444444444444444444444444444ffff444444444444", "544444444444999944444444444444444444444444444444ffff444444444444", "544444444444999944444444444444444444444444444444ffff444444444444", "54448888444444444444444444444444444444444444444444444444eeee4444", "e4448888444444444444444444444444444444444444444444444444eeee4444", "e48888884444aaaa44444444444444444444444444444444aaaa4444eeeeee44", "e48888884444aaaa44444444444444444444444444444444aaaa4444eeeeee44", "e48888884444aaaa44444444444444444444444444444444aaaa4444eeeeee44", "e48888884444aaaa44444444444444444444444444444444aaaa4444eeeeee44", "e4448888444444444444444444444444444444444444444444444444eeee4444", "e4448888444444444444444444444444444444444444444444444444eeee4444", "e444444444442222444444444444444444444444444444449999444444444444", "e444444444442222444444444444444444444444444444449999444444444444", "e444444444442222444444444444444444444444444444449999444444444444", "e444444444442222444444444444444444444444444444449999444444444444", "e444444444444444444444444444444444444444444444444444444444444444", "e444444444444444444444444444444444444444444444444444444444444444", "e44444444444111144aaaa44ffff442222441111441111449999444444444444", "e44444444444111144aaaa44ffff442222441111441111449999444444444444", "e44444444444111144aaaa44ffff442222441111441111449999444444444444", "e44444444444111144aaaa44ffff442222441111441111449999444444444444", "e444444444444444444444444444444444444444444444444444444444444444", "e444444444444444444444444444444444444444444444444444444444444444", "e444444444444444444444444444444444444444444444444444444444444444", "e444444444444444444444444444444444444444444444444444444444444444", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333", "e333333333333333333333333333333333333333333333333333333333333333"]' data-pal='["#ffffff", "#cccccc", "#999999", "#666666", "#333333", "#000000", "#e53aa3", "#ff7bcc", "#f93c31", "#1e93ff", "#88d8f1", "#ffdc00", "#ff851b", "#921231", "#4fcc30", "#a356d6"]'></canvas><div class="obs-note">Rendered frame (left) plus the full 64×64 ASCII hex grid below — one hex char per cell (0–f = color 0–15). The model receives both.</div></div><pre class="grid-ascii">5333333333333333333333333333333333333333333333333333333333333333
+5333333333555535555355553555535555355553555535555333333333333333
+5333333333333333333333333333333333333333333333333333333333333333
+5333333333333333333333333333333333333333333333333333333333333333
+5333333333333333333333333333333333333333333333333333333333333333
+5333333333333333333333333333333333333333333333333333333333333333
+5333333333333333333333333333333333333333333333333333333333333333
+5333333333333333333333333333333333333333333333333333333333333333
+5333333333333333333333333333333333333333333333333333333333333333
+5333333333333333333333333333333333333333333333333333333333333333
+5333333333333333333333333333333333333333333333333333333333333333
+5333333333333333333333333333333333333333333333333333333333333333
+5333333333333333333333333333333333333333333333333333333333333333
+5444444444444444444444444444444444444444444444444444444444444444
+5444444444444444444444444444444444444444444444444444444444444444
+5444444444444444444444444444444444444444444444444444444444444444
+5444444444444444444444444444444444444444444444444444444444444444
+5444444444bb4444bb4444444444444444444444444444444444444444444444
+5444444444bb4444bb4444444444444444444444444444444444444444444444
+544444444444ffff44bbbb44222244ffff44999944aaaa442222444444444444
+544444444444ffff44bbbb44222244ffff44999944aaaa442222444444444444
+544444444444ffff44bbbb44222244ffff44999944aaaa442222444444444444
+544444444444ffff44bbbb44222244ffff44999944aaaa442222444444444444
+5444444444bb4444bb4444444444444444444444444444444444444444444444
+5444444444bb4444bb4444444444444444444444444444444444444444444444
+544444444444999944444444444444444444444444444444ffff444444444444
+544444444444999944444444444444444444444444444444ffff444444444444
+544444444444999944444444444444444444444444444444ffff444444444444
+544444444444999944444444444444444444444444444444ffff444444444444
+54448888444444444444444444444444444444444444444444444444eeee4444
+e4448888444444444444444444444444444444444444444444444444eeee4444
+e48888884444aaaa44444444444444444444444444444444aaaa4444eeeeee44
+e48888884444aaaa44444444444444444444444444444444aaaa4444eeeeee44
+e48888884444aaaa44444444444444444444444444444444aaaa4444eeeeee44
+e48888884444aaaa44444444444444444444444444444444aaaa4444eeeeee44
+e4448888444444444444444444444444444444444444444444444444eeee4444
+e4448888444444444444444444444444444444444444444444444444eeee4444
+e444444444442222444444444444444444444444444444449999444444444444
+e444444444442222444444444444444444444444444444449999444444444444
+e444444444442222444444444444444444444444444444449999444444444444
+e444444444442222444444444444444444444444444444449999444444444444
+e444444444444444444444444444444444444444444444444444444444444444
+e444444444444444444444444444444444444444444444444444444444444444
+e44444444444111144aaaa44ffff442222441111441111449999444444444444
+e44444444444111144aaaa44ffff442222441111441111449999444444444444
+e44444444444111144aaaa44ffff442222441111441111449999444444444444
+e44444444444111144aaaa44ffff442222441111441111449999444444444444
+e444444444444444444444444444444444444444444444444444444444444444
+e444444444444444444444444444444444444444444444444444444444444444
+e444444444444444444444444444444444444444444444444444444444444444
+e444444444444444444444444444444444444444444444444444444444444444
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333
+e333333333333333333333333333333333333333333333333333333333333333</pre></div></details><details class="fold"><summary>Turn instructions</summary><div class="fold-body"><pre class="mono small">This is a running conversation about the frame above. The frame stays fixed until you act. You have at most 24 non-action turns to decide the next action(s). Balance analysis with action: reason only as much as needed to predict the next useful move, then use take_actions or run action emitting skills. Do not repeat tools whose output is already in this conversation or recap; save conclusions to memory instead. Progress includes advancing the game and disproving a hypothesis; each action gives a fresh observation.</pre></div></details></div><div class="meter" style="width:76.2%"><span class="seg cached" style="width:0.0%"></span><span class="seg fresh" style="width:100.0%"></span></div><div class="meter-note">first turn · full prompt built · 33,809 tok</div><div class="call k-skill"><span class="who">VLM</span><span class="arrow">&rarr;</span><code class="tool">run_skill</code> <span class="call-arg">eval_python</span><div class="reasoning">"I need to accurately read the colors of the blocks in the loop and the colors of the dashes at the top to understand the goal."</div></div><div class="result"><span class="who res">result</span><span class="arrow">&crarr;</span><code class="preview">{&quot;row&quot;: &quot;e444444444444444444444444444444444444444444444444444444444444444&quot;, &quot;out&quot;: &quot;0:e 1:4 2:4 3:4 4:4 5:4 6:4 7:4 8:4 9:4 10:4 11:4 12:4 13:4 14:4 15:4 16:4 17:4 18:4 19:4 20:4 21:4 22:4 23:4 24:4 25:4 26:4 27:4 28:4 29:4 30:4 31:4 32:4 3 ...</code></div></div></section><section class="turn append"><div class="turn-rail"><span class="tnum">turn 1</span><span class="tlabel">appended</span></div><div class="turn-body"><div class="append-tag">&#10549; tool result appended &mdash; working prompt unchanged</div><div class="meter" style="width:79.9%"><span class="seg cached" style="width:92.0%"></span><span class="seg fresh" style="width:8.0%"></span></div><div class="meter-note">32,632 cached · +2,827 new</div><div class="call k-refine"><span class="who">VLM</span><span class="arrow">&rarr;</span><code class="tool">process_skill</code> <span class="call-arg">edit: eval_python</span><div class="reasoning">"I need eval_python to execute the code passed in args."</div></div><div class="result"><span class="who res">result</span><span class="arrow">&crarr;</span><code class="preview">{&quot;success&quot;: true, &quot;operation&quot;: &quot;edit&quot;, &quot;id&quot;: &quot;skill_002&quot;, &quot;updated_at&quot;: &quot;2026-06-17T12:14:46&quot;}</code></div></div></section><section class="turn append"><div class="turn-rail"><span class="tnum">turn 2</span><span class="tlabel">appended</span></div><div class="turn-body"><div class="append-tag">&#10549; tool result appended &mdash; working prompt unchanged</div><div class="meter" style="width:81.2%"><span class="seg cached" style="width:90.6%"></span><span class="seg fresh" style="width:9.4%"></span></div><div class="meter-note">32,625 cached · +3,368 new</div><div class="call k-skill"><span class="who">VLM</span><span class="arrow">&rarr;</span><code class="tool">run_skill</code> <span class="call-arg">analyze_loop</span><div class="reasoning">"I have an analyze_loop skill already! Let&#x27;s see what it outputs."</div></div><div class="result"><span class="who res">result</span><span class="arrow">&crarr;</span><code class="preview">{&quot;loop_sequence&quot;: &quot;fb2f9a2fa99112fa12a9&quot;, &quot;coords&quot;: [[13, 20], [19, 20], [25, 20], [31, 20], [37, 20], [43, 20], [49, 20], [49, 26], [49, 32], [49, 38], [49, 44], [43, 44], [37, 44], [31, 44], [25, 44], [19, 44], [13, 44], [13, 38], [13, 32 ...</code></div></div></section><section class="turn append"><div class="turn-rail"><span class="tnum">turn 3</span><span class="tlabel">appended</span></div><div class="turn-body"><div class="append-tag">&#10549; tool result appended &mdash; working prompt unchanged</div><div class="meter" style="width:83.6%"><span class="seg cached" style="width:87.9%"></span><span class="seg fresh" style="width:12.1%"></span></div><div class="meter-note">32,620 cached · +4,480 new</div><div class="call k-skill"><span class="who">VLM</span><span class="arrow">&rarr;</span><code class="tool">run_skill</code> <span class="call-arg">eval_python</span><div class="reasoning">"Let&#x27;s see if there is any target pattern or hidden object I missed."</div></div><div class="result"><span class="who res">result</span><span class="arrow">&crarr;</span><code class="preview">failed: sandbox policy: name &#x27;exec&#x27; is not allowed</code></div></div></section><section class="turn append"><div class="turn-rail"><span class="tnum">turn 4</span><span class="tlabel">appended</span></div><div class="turn-body"><div class="append-tag">&#10549; tool result appended &mdash; working prompt unchanged</div><div class="meter" style="width:93.7%"><span class="seg cached" style="width:88.4%"></span><span class="seg fresh" style="width:11.6%"></span></div><div class="meter-note">36,706 cached · +4,832 new</div><div class="call k-refine"><span class="who">VLM</span><span class="arrow">&rarr;</span><code class="tool">process_skill</code> <span class="call-arg">add: analyze_all_colors</span><div class="reasoning">"To see all colors and where they are located."</div></div><div class="result"><span class="who res">result</span><span class="arrow">&crarr;</span><code class="preview">{&quot;success&quot;: true, &quot;operation&quot;: &quot;add&quot;, &quot;id&quot;: &quot;skill_003&quot;, &quot;tags&quot;: [], &quot;upserted&quot;: false, &quot;message&quot;: &quot;added new skill &#x27;analyze_all_colors&#x27;&quot;}</code></div></div></section><section class="turn append"><div class="turn-rail"><span class="tnum">turn 5</span><span class="tlabel">appended</span></div><div class="turn-body"><div class="append-tag">&#10549; tool result appended &mdash; working prompt unchanged</div><div class="meter" style="width:95.4%"><span class="seg cached" style="width:96.4%"></span><span class="seg fresh" style="width:3.6%"></span></div><div class="meter-note">40,779 cached · +1,534 new</div><div class="call k-skill"><span class="who">VLM</span><span class="arrow">&rarr;</span><code class="tool">run_skill</code> <span class="call-arg">analyze_all_colors</span><div class="reasoning">"Find all colors and their bounding boxes to detect if there is any target pattern to copy."</div></div><div class="result"><span class="who res">result</span><span class="arrow">&crarr;</span><code class="preview">{&quot;5&quot;: {&quot;count&quot;: 62, &quot;min_x&quot;: 0, &quot;max_x&quot;: 48, &quot;min_y&quot;: 0, &quot;max_y&quot;: 29}, &quot;3&quot;: {&quot;count&quot;: 1606, &quot;min_x&quot;: 1, &quot;max_x&quot;: 63, &quot;min_y&quot;: 0, &quot;max_y&quot;: 63}, &quot;4&quot;: {&quot;count&quot;: 1978, &quot;min_x&quot;: 1, &quot;max_x&quot;: 63, &quot;min_y&quot;: 13, &quot;max_y&quot;: 50}, &quot;b&quot;: {&quot;count&quot;: 32, &quot;min_ ...</code></div></div></section><section class="turn append"><div class="turn-rail"><span class="tnum">turn 6</span><span class="tlabel">appended</span></div><div class="turn-body"><div class="append-tag">&#10549; tool result appended &mdash; working prompt unchanged</div><div class="meter" style="width:98.0%"><span class="seg cached" style="width:93.8%"></span><span class="seg fresh" style="width:6.2%"></span></div><div class="meter-note">40,774 cached · +2,675 new</div><div class="call k-act"><span class="who">VLM</span><span class="arrow">&rarr;</span><code class="tool">take_actions</code> <span class="call-arg">ACTION5</span><div class="reasoning">"I will press Enter/Space (ACTION5) to see if it selects the block currently inside the cursor and puts its color into the top dashes."</div></div><div class="result"><span class="who res">result</span><span class="arrow">&crarr;</span><code class="preview">failed:</code></div></div></section><section class="turn act"><div class="turn-rail"><span class="tnum">turn 7</span><span class="tlabel">take_actions</span></div><div class="turn-body"><div class="append-tag act-tag">&#10022; state changes &rarr; conversation closes &rarr; next decision re-assembles the prompt</div><div class="meter" style="width:100.0%"><span class="seg cached" style="width:91.9%"></span><span class="seg fresh" style="width:8.1%"></span></div><div class="meter-note">40,769 cached · +3,584 new</div><div class="call k-act"><span class="who">VLM</span><span class="arrow">&rarr;</span><code class="tool">take_actions</code> <span class="call-arg">ACTION6(x=19,y=20)</span><div class="reasoning">"Only ACTION6 is available. Let&#x27;s try clicking the solid yellow block to see if it does something (e.g. extracts it)."</div></div></div></section>
+    </div>
+  </div>
+  <div class="foot">Token bars are the recorded prompt/cached counts for each turn. After turn 0 the
+  cached segment (grey) is the frozen prefix + earlier turns; only the small accent segment is new —
+  the working prompt is never rebuilt within a decision.</div>
+</div>
+<script>
+document.querySelectorAll('canvas.grid').forEach(function(cv){
+  var rows = JSON.parse(cv.dataset.rows);
+  var pal = JSON.parse(cv.dataset.pal);
+  var n = rows.length || 1;
+  var ctx = cv.getContext('2d');
+  var cell = cv.width / n;
+  for (var y = 0; y < rows.length; y++){
+    var row = rows[y];
+    for (var x = 0; x < row.length; x++){
+      ctx.fillStyle = pal[parseInt(row[x], 16)] || '#000';
+      ctx.fillRect(Math.floor(x*cell), Math.floor(y*cell), Math.ceil(cell), Math.ceil(cell));
+    }
+  }
+});
+</script>
+</body></html>
