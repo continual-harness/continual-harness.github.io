@@ -10,29 +10,27 @@
 </div>
 
 ---
+Long-horizon interactive tasks remain difficult for language models because useful experience does not fit neatly into a finite context window. Last month, we introduced Continual Harness to address this problem through automated trajectory distillation and harness self-improvement.
 
-Long-horizon interactive tasks remain difficult for language models because useful experience does not fit neatly into a finite context window. We introduced Continual Harness to address this problem through automated trajectory distillation and harness self-improvement.
+Continual Harness is a reset-free, self-improving agentic harness that enables a foundation model to store memories, write reusable skills, deploy subagents, and refine its own prompt during interactive tasks. In our previous evaluations on Pokémon Red and Emerald, Continual Harness started with no prior memory, hand-crafted tools, or domain-specific scaffolding, and completed early-to-mid milestones of both games with comparative efficiency to the hand-crafted harness. 
 
-Continual Harness is a reset-free, self-improving agentic harness that enables a foundation model to store memories, write reusable skills, deploy subagents, and refine its own prompt during interactive tasks. On Pokémon Red and Emerald, Continual Harness started from scratch with no prior memory, hand-crafted tools, or domain-specific scaffolding, and completed early-to-mid milestones of both games with comparative efficiency to the hand-crafted harness. 
+This raises two further questions:
 
-This raises two natural questions:
-
-```markdown
 1. Can Continual Harness discover hidden rules in games designed to be unknown at test time?
+
 2. Which part of Continual Harness contributes most to its long-horizon progress? 
-```
 
 We study these questions on the public set of the ARC-AGI-3 benchmark.
 
-ARC-AGI-3 evaluates the interactive reasoning ability of LLM agents across 25 public games in a shared environment. The benchmark remains difficult for LLM agents because each game must be played without provided rules or domain-specific knowledge, and the scoring function accounts for action efficiency. The agent must therefore explore wisely and act efficiently. As of Jun 23 2026, the best CoT model `Claude Opus 4.8 (high)` only reached 1.5% on the public benchmark, and the officially released harness (OpenClaw with `Claude Opus 4.7`) only scored 5.2%.
+ARC-AGI-3 evaluates the interactive reasoning ability of LLM agents across 25 public games in a shared environment. It is a perfect testbed for Continual Harness because the tasks are strictly unseen by the foundation model we use and are a good measure of human-level intelligence (most games are not intuitive even for human players at the first sight, and the scoring method accounts for the agent’s action efficiency compared with humans). That said, the benchmark is difficult for LLM agents without provided rules or domain-specific knowledge, and the agent must explore wisely and act efficiently. As of Jun 23 2026, the best CoT model `Claude Opus 4.8 (high)` only reached 1.5% on the public benchmark, and the officially released harness (OpenClaw with `Claude Opus 4.7`) only scored 5.2%.
 
-Starting from minimal information about the game environment (without even a color legend for the ASCII map) and using strictly sandboxed code execution, Continual Harness scored 20.54% with a total cost of only $774. This makes it one of the most cost-efficient agentic harnesses on the leaderboard. To better understand where the gain comes from, we also implemented a Hermes-based harness with comparable architecture and prompting as an ablation.
+Starting from minimal information about the game environment (without even a color legend for the ASCII map) and using strictly sandboxed code execution, Continual Harness scored 20.54% with a total cost of only $774. This makes it one of the most efficient agentic harnesses on the leaderboard. To better understand where the gain comes from, we additionally implemented a Hermes-based harness with comparable prompts and settings.
 
-Here are our key findings:
-- **Unknown games need an editable world model.** Continual Harness generalizes by turning interaction history into a live surrogate state made of policy, memory, skills, and subagents. The useful design lesson is to store hypotheses as an editable state, track how strongly they are supported, and let later evidence revise them.  
+Here are our key findings (TL;DR):
+
+- **Unknown games need an editable world model.** Continual Harness generalizes by turning interaction history into a live surrogate state made of system prompt, memory, skills, and subagents. The useful design lesson is to store hypotheses as an editable state, track how strongly they are supported, and let later evidence revise them.  
 - **Reusable skills turn early exploration into future efficiency.** Across 25 games, 62% of Continual Harness's executed actions come from saved skills. This allows later decisions to reuse a tested routine instead of re-solving the same subproblem through fresh VLM deliberation. For long-horizon agents, recurring computation should be promoted into reusable skills with clear inputs, outputs, and trigger conditions.  
-- **Reset-free refinement allows the model to bootstrap.** Continual Harness has the Refiner reread raw trajectories and updates the policy, memory, skills, and subagents without restarting the run. This lets the model convert noisy trial-and-error into a cleaner world model and solve later levels with much smaller action budgets. The next improvement is stronger evidence auditing, so weak guesses and noisy trajectory segments are less likely to enter a persistent state.
-
+- **Reset-free refinement allows the model to bootstrap.** Continual Harness has the Refiner reread raw trajectories and updates the system prompt, memory, skills, and subagents without restarting the run. This lets the model convert noisy trial-and-error into a cleaner world model and solve later levels with much smaller action budgets. The next improvement could be stronger evidence auditing, so that weak guesses and noisy trajectory segments are less likely to enter a persistent state.
 
 ![score vs cost on the ARC-AGI-3 public set](artifacts/figures/leaderboard_cost_score.svg)
 
@@ -68,7 +66,7 @@ Third, we add a `confidence` field to each memory entry, where `1 = untested gue
 
 ## Experimental setup
 
-We evaluate Continual Harness and Hermes on 25 public games of ARC-AGI-3 using the same foundation model `gemini-3.1-pro-preview` and matched environmental interfaces. All games run once in `online` mode without cherry-picking or prior information to the agent. 
+We evaluate Continual Harness and Hermes on 25 public games of ARC-AGI-3 using the same foundation model `gemini-3.1-pro-preview` and matched environmental interfaces. All games run once in `online` mode without cherry-picking or prior information to the agent.
 
 Continual Harness follows the architecture described above, and each game stops when per-level actions exceed \(5\times\) the human baseline, total actions exceed 5,000, or session cost exceeds $100.
 Hermes agent runs inside a Docker container and interacts with the ARC-AGI-3 environment through an MCP game server exposing only `get_game_state` and `take_actions`. It retains its built-in tools for code execution, file access, memory, skills, and session search, and uses a stopping threshold of 10,000 actions.
