@@ -28,9 +28,9 @@ Starting from minimal information about the game environment (without even a col
 
 Here are our key findings (TL;DR):
 
-- **Unknown games need an editable world model.** Continual Harness generalizes by turning interaction history into a live surrogate state made of system prompt, memory, skills, and subagents. The useful design lesson is to store hypotheses as an editable state, track how strongly they are supported, and let later evidence revise them.  
-- **Reusable skills turn early exploration into future efficiency.** Across 25 games, 62% of Continual Harness's executed actions come from saved skills. This allows later decisions to reuse a tested routine instead of re-solving the same subproblem through fresh VLM deliberation. For long-horizon agents, recurring computation should be promoted into reusable skills with clear inputs, outputs, and trigger conditions.  
-- **Reset-free refinement allows the model to bootstrap.** Continual Harness has the Refiner reread raw trajectories and updates the system prompt, memory, skills, and subagents without restarting the run. This lets the model convert noisy trial-and-error into a cleaner world model and solve later levels with much smaller action budgets. The next improvement could be stronger evidence auditing, so that weak guesses and noisy trajectory segments are less likely to enter a persistent state.
+- **Continual Harness generalizes by improving a world model at test time.** Continual Harness turns interaction history into a live surrogate state of system prompt, memory, skills, and subagents. These components behave like an editable world model where the harness stores and refines its understanding of the game dynamics.  
+- **The efficiency of Continual Harness comes from skill reusing.** Across 25 games, 62% of Continual Harness's executed actions come from saved skills. Allowing later decisions to reuse and improve on a tested routine avoids recurring exploration and computation.  
+- **Reset-free refinement allows the model to bootstrap from early exploration.** The Refiner of Continual Harness is an external VLM call that rereads raw trajectories, verifies and consolidates the learned mechanics, and updates the system prompt, memories, skills, and subagents without restarting the run. This turns noisy trial-and-error into a cleaner world model for later levels. The next step is to impose stronger evidence auditing for better self-refinement quality.
 
 ![score vs cost on the ARC-AGI-3 public set](artifacts/figures/leaderboard_cost_score.svg)
 
@@ -54,13 +54,13 @@ At each game-state boundary, the orchestrator assembles its decision context fro
 
 For ARC-AGI-3, we made three changes to improve tool use and exploration. 
 
-First, we changed when the user prompt is rebuilt. The prompt is now fully resembled only after tool calls that can change the game state: `take_actions`, `run_subagent`, and action-firing `run_skill`. tool calls that only edit the harness state or perform analysis (e.g., `process_skill`, `process_memory`, `process_subagent`, and non-action-firing `run_skill`) do not trigger a full prompt rebuild. Their outputs are appended to the ongoing conversation until the next game-state-changing action occurs. This preserves the local reasoning chain across internal edits and analysis calls.
+First, we changed when the user prompt is rebuilt. The prompt is now fully resembled only after tool calls that can change the game state: `take_actions`, `run_subagent`, and action-firing `run_skill`. Tool calls that only edit the harness state or perform analysis (`process_skill`, `process_memory`, `process_subagent`, and non-action-firing `run_skill`) do not trigger a full prompt rebuild. Their outputs are appended to the ongoing conversation until the next game-state-changing action occurs. This preserves the local reasoning chain across internal edits and analysis calls.
 
 ![ARC-AGI-3 continual harness loop](artifacts/figures/arcagi3_continual_harness_loop.png)
 
 Second, we trigger the Refiner after game-over and level-up events, in addition to the periodic refining loop that runs every \(F\) steps.
 
-Third, we add a `confidence` field to each memory entry, where `1 = untested guess, 2 = weak evidence, 3 = unverified inference, 4 = confirmed once, 5 = repeatedly confirmed`. This enables the preservation of speculative rules and reduces the risk that hallucinated or weakly supported claims dominate future decisions.
+Third, we add a `confidence` field to each memory entry, where `1 = untested guess, 2 = weak evidence, 3 = unverified inference, 4 = confirmed once, 5 = repeatedly confirmed`. The extra field helps preserve speculative rules and reduce the risk that hallucinated or weakly supported claims dominate future decisions.
 
 <div data-embed="prompt-loop"></div>
 
@@ -68,43 +68,43 @@ Third, we add a `confidence` field to each memory entry, where `1 = untested gue
 
 We evaluate Continual Harness and Hermes on 25 public games of ARC-AGI-3 using the same foundation model `gemini-3.1-pro-preview` and matched environmental interfaces. All games run once in `online` mode without cherry-picking or prior information to the agent.
 
-Continual Harness follows the architecture described above, and each game stops when per-level actions exceed \(5\times\) the human baseline, total actions exceed 5,000, or session cost exceeds $100.
-Hermes agent runs inside a Docker container and interacts with the ARC-AGI-3 environment through an MCP game server exposing only `get_game_state` and `take_actions`. It retains its built-in tools for code execution, file access, memory, skills, and session search, and uses a stopping threshold of 10,000 actions.
+Continual Harness follows the architecture described above. Each game stops when per-level actions exceed \(5\times\) the human baseline, total actions exceed 5,000, or session cost exceeds $100.
+Hermes agent runs inside a Docker container and interacts with the ARC-AGI-3 environment through an MCP game server exposing only `get_game_state` and `take_actions`. Hermes retains its built-in tools for code execution, file access, memory, skills, and session search, and uses a stopping threshold of 10,000 actions.
 Neither agent has access to game rules, source code, the scoring method, environment files, or any task-specific privileged information.
 
 We use Hermes as an additional baseline because it also focuses on updating skills over an agent's session. Hermes shares the same model and environment interface as Continual Harness, so the comparison is more controlled than to other leaderboard harnesses. Community leaderboard entries are reported as external reference points.
 
 ## Results
 
-The evaluation result of Continual Harness reveals its strength in action efficiency. The 20.54% score of Continual Harness outperforms both the controlled Hermes baseline (8.25%) and the public OpenClaw reference point (5.20%) at a much lower cost. This suggests that the gain does not come from spending more inference budget. 
+Continual Harness scored 20.54% on the public set of ARC-AGI-3 at a cost of $774. The result outperforms the controlled Hermes baseline (8.25% at $5,674), the public OpenClaw reference point (5.20% at $2,912), and the `A-Evolve MAS Evolved` agent (12.30% at $5,300). 
 
-The clearest pattern appears in the comparison with Hermes. Hermes completes slightly more levels overall (70 vs. 64) but scores less than half as many points because its completed levels require far more actions. On completed levels, the average action ratio relative to the human baseline is \(15.30\times\) for Hermes, compared with only \(1.48\times\) for Continual Harness. The largest gains for Continual Harness come from games where the agent discovers a mechanic early and then solves later levels with much lower action cost (`lp85`, `sp80`, `m0r0`, `cn04`, `ft09`).
+The main source of Continual Harness’s score advantage comes from action efficiency. It completes levels by discovering workable mechanics early and reusing those mechanics on later levels. Compared with Hermes, Continual Harness completed fewer levels overall (64 vs. 70) but achieved more than twice the final score. The per-level comparison shows that Continual Harness averages only 1.48x the human baseline actions on completed levels while Hermes averages 15.30x. On its strongest games (`lp85`, `ft09`, `m0r0`, `tu93`), Continual Harness follows a pattern that it spends the first few levels exploring the game dynamics and clears later levels with nearly full scores. 
 
 ![score comparison](artifacts/figures/score_comparison.png)
 
 ![level heatmap](artifacts/figures/level_progression_heatmaps.png)
 
-The broader leaderboard comparison indicates the same pattern. OpenClaw completes 28 / 183 levels with 9010 total actions and reaches 5.20%, showing how quickly inefficient exploration is penalized. `a-evolve MAS Evolved` is a closer self-improving reference point. It reports the same completed levels as Continual Harness, but scores 12.30% at $5,300. The difference suggests that Continual Harness benefits from its specific form of self-improvement: a reset-free Refiner that reviews trajectories outside the orchestrator's immediate context and updates the harness while the game continues.
+The broader leaderboard comparison reveals the advantage of Continual Harness’s persistent state and self-improving design. OpenClaw gives the model a persistent scratchpad through memory and file tools, but its state remains mostly textual and does not become executable skills or subagents. `A-Evolve` also improves the agent’s workspace across cycles, but with a heavy solve-evolve-reload workflow that results in a higher reported cost.
 
-We look inside the successful runs to understand where the efficiency of Continual Harness comes from. Two patterns explain most of the gain: reusable skills turn discovered mechanics into cheap execution routines, and reset-free refinement keeps the harness's world model aligned as trajectories grow longer.
+We then look inside the successful runs to understand where Continual Harness gets its efficiency. We find two design choices that explain most of the gain: reusable skills turn discovered mechanics into efficient execution routines, and reset-free refinement keeps the harness's world model aligned as trajectories grow longer.
 
 
-#### **Reusable skills turn discovery into cheap execution**
+### **Reusable skills turn discovery into efficient execution**
 
-Continual Harness turns discovered mechanics into reusable execution routines. Across the 25 games, 62% of its executed actions originate from saved skills rather than fresh VLM deliberation. On `cn04` and `ft09`, the share exceeds 80%. This reuse also appears in the tool-call profile. Among 7,307 tool calls, 64% replay learned skills and 35% create or refine skills and memory.
+Continual Harness gains efficiency because useful computation becomes part of the harness state instead of remaining scratch work. Across 25 games, 62% of the executed actions originate from saved skills rather than fresh VLM deliberation. This share exceeds 80% on the harness’s top-performing games such as `cn04` and `ft09`. In terms of tool use distribution, 64% of Continual Harness’s tool calls replay learned skills and 35% create or edit skills and memory.
 
-The Hermes ablation shows what happens when useful computation stays transient. Hermes makes 18,717 tool calls, and 86% are `execute_code`. Only 0.07% persist skills or memory. Useful scripts such as BFS solvers, grid parsers, and state trackers are repeatedly written as one-off code, used locally, and discarded. Continual Harness gains efficiency because useful computation becomes part of the harness state instead of remaining scratch work.
+The Hermes baseline provides an example where useful computation stays transient. Hermes spends 86% of its 18,717 tool calls on `execute_code`, and only 0.07% on persisting skills or memory. Useful scripts such as BFS solvers, grid parsers, and state trackers are repeatedly written as one-off code. 
 
 ![tool call distribution](artifacts/figures/tool_call_distribution.png)
 
 
-#### **Reset-free refinement keeps the world model aligned**
+### **Reset-free refinement keeps the world model aligned**
 
-Reset-free refinement explains why late levels become the primary source of Continual Harness's score gain. After a level-up, game-over or stagnation point, the refiner rereads the raw trajectory, identifies observations that reveal stable game mechanics, and consolidates the learned mechanics into the live decision context. All four components of the surrogate state (policy, skills, memory, and subagents) are jointly refined, so that corrected abstractions propagate into execution routines, and the harness assembles a self-contained world model from scattered evidence.
+Reset-free refinement explains why late levels become the primary source of Continual Harness's score gain. After a level-up, game-over or stagnation point, the refiner rereads the raw trajectory, identifies observations that reveal stable game mechanics, and consolidates the learned mechanics into the live decision context. All four components of the surrogate state (system prompt, skills, memory, and subagents) are jointly refined, so that corrected abstractions propagate into execution routines, and the harness assembles a self-contained world model from scattered evidence.
 
 <div data-embed="refinement-lift"></div>
 
-The `lp85` and `cn04` traces show how reset-free refinement keeps the harness state aligned with the game. In `lp85`, game-over and stagnation points become checkpoints for rereading the trajectory, rewriting the policy, and saving executable skills once a reusable routine is supported by evidence. Rules and mechanics memories accumulate during refinements, and skill operations gradually shift from exploration toward exploitation as the harness gathers a more computable rule model. After the relevant method is compiled into the harness, later levels require much smaller action budgets.
+The `lp85` and `cn04` traces show how reset-free refinement keeps the harness state aligned with the game. In `lp85`, game-over and stagnation points become checkpoints for rereading the trajectory, rewriting the prompt, and saving executable skills once a reusable routine is supported by evidence. Rules and mechanics memories accumulate during refinements, and skill operations gradually shift from exploration toward exploitation as the harness gathers a more computable rule model. After the relevant method is compiled into the harness, later levels require much smaller action budgets.
 
 <div data-embed="lp85-policy"></div>
 
@@ -119,9 +119,22 @@ In `cn04`, refinement turns a partial early model into a precise rule that later
 
 ## What's next
 
-Continual Harness already shows a strong balance between exploration and exploitation on unknown interactive tasks. The next step is to make that balance more reliable. In long-horizon games, weak hypotheses can accumulate into misleading memory, brittle skills, or overconfident policy updates. Better exploration should therefore focus on evidence quality. 
-Meanwhile, the ability of Continual Harness is dependent on the foundation model. On open-source VLMs, the performance of Continual Harness may not be as good as on frontier closed models. 
+Continual Harness already shows a strong balance between exploration and exploitation on unknown interactive tasks. The next step is to make that balance more reliable. In long-horizon games, weak hypotheses can accumulate into misleading memory, brittle skills, or overconfident prompt updates. Better exploration should therefore focus on evidence quality. Meanwhile, the ability of Continual Harness is dependent on the foundation model. On open-source VLMs, the performance of Continual Harness may not be as good as on frontier closed models.
 
-We see two directions from here. First, exploration should become more disciplined. The Refiner needs better ways to audit evidence, compare competing hypotheses, and decide which trajectory segments are worth turning into memory, skills, or policy updates.
+We see two directions from here. First, exploration should become more disciplined. The Refiner needs better ways to audit evidence, compare competing hypotheses, and decide which trajectory segments are worth turning into memory, skills, or prompt updates.
 
 Second, the harness should become less dependent on frontier closed models. Continual Harness trajectories may provide training data for open-source VLMs, so that smaller reproducible agents can learn to use memory, skills, and refinement with similar long-horizon discipline.
+
+
+## Citation
+
+If you use Continual Harness in your work, please cite the original paper:
+
+```bibtex
+@article{karten2026continual,
+  title={Continual Harness: Online Adaptation for Self-Improving Foundation Agents},
+  author={Karten, Seth and Zhang, Joel and Upaa Jr, Tersoo and Feng, Ruirong and Li, Wenzhe and Shi, Chengshuai and Jin, Chi and Vodrahalli, Kiran},
+  journal={arXiv preprint arXiv:2605.09998},
+  year={2026}
+}
+```
