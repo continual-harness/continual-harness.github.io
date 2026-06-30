@@ -35,8 +35,11 @@
   --text:50rem;            /* prose line-length cap (~editorial measure) */
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+/* bg on html too so the propagated page color fills the whole canvas even where
+   the zoomed-down body doesn't reach the viewport edges. */
+html{-webkit-text-size-adjust:100%; background:var(--bg);}
 body{
+  zoom:.9;                /* global 90% scale-down (matches browser zoom at 90%) */
   margin:0; background:var(--bg); color:var(--body);
   font-family:var(--serif); font-size:23px; line-height:1.72;
   font-feature-settings:"liga" 1,"kern" 1;
