@@ -124,9 +124,14 @@ In long-horizon tasks, the internal world model of the harness is susceptible to
 Another challenge is generality. Continual Harness works best with strong frontier models. We want to reduce that dependence from both sides. On the harness side, we want a more universal self-improving scaffold that can help weaker models without relying on model-specific behavior. On the model side, the goal is to train open-source models to use and improve the harness well over long horizons. 
 
 
+## Acknowledgements
+
+This blog builds on our original Continual Harness project. We thank all coauthors of the Continual Harness paper for their contributions, including Joel Zhang, Tersoo Upaa Jr., and Kiran Vodrahalli for their work on the original system. We also thank Google DeepMind for supporting this work with Gemini API credits.
+
+
 ## Citation
 
-If you use Continual Harness in your work, please cite the original paper:
+If you use Continual Harness in your work, please cite our original paper:
 
 ```bibtex
 @article{karten2026continual,
