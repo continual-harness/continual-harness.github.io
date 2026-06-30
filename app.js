@@ -14,7 +14,7 @@
 
   // Bump on any figure/asset edit so browsers fetch fresh PNGs instead of stale
   // cached ones (figure images have stable filenames; only their bytes change).
-  var ASSET_V = "14";
+  var ASSET_V = "15";
 
   // ---- Math: \(inline\) and \[display\] -> KaTeX. Both registered inline-level so
   // display blocks inside a paragraph are still captured. ----
@@ -116,7 +116,7 @@
     "prompt-loop": function () {
       return (
         '<section class="embed">' +
-        '<div class="iframe-wrap"><iframe src="artifacts/prompt_loop.html?v=7" ' +
+        '<div class="iframe-wrap"><iframe src="artifacts/prompt_loop.html?v=8" ' +
         'title="Example of Continual Harness decision loop" ' +
         'height="940" loading="lazy"></iframe></div>' +
         '<p class="embed-caption"><b>Example of Continual Harness decision loop.</b> ' +
@@ -171,7 +171,7 @@
     "lp85-policy": function () {
       return (
         '<section class="embed">' +
-        '<div class="iframe-wrap scroll-artifact"><iframe src="artifacts/refinement_lp85.html?v=7" ' +
+        '<div class="iframe-wrap scroll-artifact"><iframe src="artifacts/refinement_lp85.html?v=8" ' +
         'title="lp85 reset-free refinement timeline" loading="lazy" scrolling="yes"></iframe></div>' +
         '<p class="embed-caption"><b>Harness refinement trace of <code>lp85</code>.</b> ' +
         "The early levels show how the harness builds a working model of the game through refinement. " +
@@ -182,7 +182,7 @@
     "cn04-behavior": function () {
       return (
         '<section class="embed">' +
-        '<div class="iframe-wrap scroll-artifact"><iframe src="artifacts/refinement_cn04.html?v=6" ' +
+        '<div class="iframe-wrap scroll-artifact"><iframe src="artifacts/refinement_cn04.html?v=7" ' +
         'title="cn04 reset-free refinement timeline" loading="lazy" scrolling="yes"></iframe></div>' +
         '<p class="embed-caption"><b>Harness refinement trace of <code>cn04</code>.</b> ' +
         "The real mechanics are pinned down on level 2 (cost 138 actions); levels 3 and 4 then clear " +
@@ -210,7 +210,7 @@
       "reaches 20.54% at $774. Leaderboard points are public results from the ARC Prize " +
       "[verified leaderboard](https://arcprize.org/leaderboard) and " +
       "[community leaderboard](https://arcprize.org/leaderboard/community) " +
-      "(as of Jun 23 2026).",
+      "(as of Jun 30 2026).",
     "score_comparison.png":
       "**Continual Harness vs. Hermes: final score per game.** Final score on each of the " +
       "25 ARC-AGI-3 games. Each dumbbell pairs Continual Harness (blue) with the Hermes " +

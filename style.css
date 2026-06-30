@@ -1,14 +1,15 @@
 /* Continual Harness blog — warm editorial reading theme.
    Cream paper, high-contrast display serif (Playfair Display) for headings,
-   a warm reading serif (Spectral) for prose, letter-spaced uppercase eyebrows,
-   thin warm hairlines, and a terracotta accent. Data-encoding colors (blue = CH,
-   orange = Hermes) are kept so the page agrees with the figure PNGs. */
+   a reading serif (Source Serif Pro) for prose, a warm serif (Spectral) for the author
+   byline, letter-spaced uppercase eyebrows, thin warm hairlines, and a terracotta
+   accent. Data-encoding colors (blue = CH, orange = Hermes) are kept so the page
+   agrees with the figure PNGs. */
 :root{
   /* warm neutrals */
-  --bg:#f4f0e7;            /* page: warm ivory */
+  --bg:#fdfdf6;            /* page: bright ivory */
   --paper:#fbf8f1;         /* cards / surfaces: warm off-white */
   --soft:#efe9db;          /* soft fills (table head, panels) */
-  --code-bg:#ece4d3;       /* inline + block code */
+  --code-bg:#f5f1e2;       /* inline code chip */
   --ink:#211c15;           /* headings: warm near-black */
   --body:#3c352b;          /* body text: warm dark brown-grey */
   --muted:#8d8472;         /* captions / meta: warm taupe */
@@ -23,8 +24,9 @@
   --orange:#c2410c;        /* Hermes (matches figures) */
   /* type */
   --display:"Playfair Display",Georgia,"Times New Roman",serif;  /* titles only */
-  /* main text + labels: Roboto (sans), with system-sans fallbacks */
-  --serif:"Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  /* main text (prose): Source Serif Pro, with system-serif fallbacks */
+  --serif:"Source Serif Pro","Source Serif 4",Georgia,Cambria,"Times New Roman",serif;
+  /* UI labels / eyebrows / captions / table heads: Roboto (sans) */
   --sans:"Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
   --label:"Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
   --byline:"Spectral","Iowan Old Style",Charter,Georgia,Cambria,"Times New Roman",serif;  /* author list */
@@ -96,11 +98,11 @@ blockquote{margin:1.4em 0; padding:.2em 0 .2em 1.1em; border-left:3px solid var(
   color:var(--muted); font-style:italic;}
 
 /* ---- code ---- */
-code{font-family:var(--mono); font-size:.8em; background:var(--code-bg);
+code{font-family:var(--mono); font-size:calc(1em - 2px); background:var(--code-bg);
   padding:1.5px 5px; border-radius:4px; color:#6a4a30;}
 pre{background:var(--paper); border:1px solid var(--line); border-radius:9px;
   padding:15px 17px; overflow:auto; box-shadow:0 1px 2px rgba(60,40,20,.04);}
-pre code{background:none; padding:0; color:var(--body); font-size:15px;}
+pre code{background:none; padding:0; color:var(--body); font-size:calc(1em - 2px);}
 
 /* ---- table (GFM); app.js wraps in .table-wrap for horizontal scroll ---- */
 .table-wrap{overflow-x:auto; margin:1.7em 0;}

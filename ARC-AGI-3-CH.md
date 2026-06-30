@@ -10,21 +10,19 @@
 </div>
 
 ---
-Long-horizon interactive tasks remain difficult for language models because useful experience does not fit neatly into a finite context window. Last month, we introduced Continual Harness to address this problem through automated trajectory distillation and harness self-improvement.
+ARC-AGI-3 is an IQ test for agents. The heavy test-time learning required by the benchmark pushes agents to form an internal world model of the rules and mechanics that updates with new evidence. Last month, we finalized a version of Continual Harness that addresses this problem through persistent state and harness self-improvement.
 
 Continual Harness is a reset-free, self-improving agentic harness that enables a foundation model to store memories, write reusable skills, deploy subagents, and refine its own prompt during interactive tasks. In our previous evaluations on Pokémon Red and Emerald, Continual Harness started with no prior memory, hand-crafted tools, or domain-specific scaffolding, and completed early-to-mid milestones of both games with comparative efficiency to the hand-crafted harness. 
 
-This raises two further questions:
-
+ARC-AGI-3 asks two further questions:
+```markdown
 1. Can Continual Harness discover hidden rules in games designed to be unknown at test time?
-
 2. Which part of Continual Harness contributes most to its long-horizon progress? 
+```
 
-We study these questions on the public set of the ARC-AGI-3 benchmark.
+We study these questions on the public set of ARC-AGI-3, which contains 25 unknown games in a shared environment. Each game is designed to hide its rules, mechanics and scoring method, so an agent cannot rely on human-engineered task descriptions or domain-specific tools. This creates a hard setting for current LLM agents and frontier models. As of Jun 30 2026, the best frontier model `Claude Opus 4.8 (high)` on the [verified leaderboard](https://arcprize.org/leaderboard) only reached 1.5%, and the officially released OpenClaw harness with `Claude Opus 4.7` only reached 5.2%.
 
-ARC-AGI-3 evaluates the interactive reasoning ability of LLM agents across 25 public games in a shared environment. It is a perfect testbed for Continual Harness because the tasks are strictly unseen by the foundation model we use and are a good measure of human-level intelligence (most games are not intuitive even for human players at the first sight, and the scoring method accounts for the agent’s action efficiency compared with humans). That said, the benchmark is difficult for LLM agents without provided rules or domain-specific knowledge, and the agent must explore wisely and act efficiently. As of Jun 23 2026, the best frontier model `Claude Opus 4.8 (high)` only reached 1.5% on the public benchmark, and the officially released harness (OpenClaw with `Claude Opus 4.7`) only scored 5.2%.
-
-Starting from minimal information about the game environment (without even a color legend for the ASCII map) and using strictly sandboxed code execution, Continual Harness scored 20.54% with a total cost of only $774. This makes it one of the most efficient agentic harnesses on the leaderboard. To better understand where the gain comes from, we additionally implemented a Hermes-based harness with comparable prompts and settings.
+Starting from minimal information about the game environment (without even a color legend for the ASCII map) and using strictly sandboxed code execution, Continual Harness scored 20.54% with a total cost of only $774. The result makes it one of the most efficient agentic harnesses on the leaderboard. To better understand where the gain comes from, we additionally implemented a Hermes-based harness with comparable prompts and settings.
 
 Here are our key findings (TL;DR):
 
