@@ -14,7 +14,7 @@
 
   // Bump on any figure/asset edit so browsers fetch fresh PNGs instead of stale
   // cached ones (figure images have stable filenames; only their bytes change).
-  var ASSET_V = "13";
+  var ASSET_V = "14";
 
   // ---- Math: \(inline\) and \[display\] -> KaTeX. Both registered inline-level so
   // display blocks inside a paragraph are still captured. ----
@@ -108,8 +108,8 @@
         card(V.ch_cn04, "ch", "cn04", "46.4 &middot; 5/6 levels") +
         "</div>" +
         '<p class="embed-caption"><b>Continual Harness top 6 game replay.</b> ' +
-        "Full-episode replays of Continual Harness's six highest-scoring games " +
-        "(gemini-3.1-pro-preview).</p>" +
+        "Full-episode replays of Continual Harness's six highest-scoring games. " +
+        "The foundation model is <code>gemini-3.1-pro-preview</code>.</p>" +
         "</section>"
       );
     },
@@ -130,7 +130,7 @@
       return pair(
         V.ch_lp85, "ch", "Continual Harness", "lp85 &middot; 100.0 (8/8)",
         V.he_lp85, "hermes", "Hermes", "lp85 &middot; 40.3 (7/8)",
-        "<b>lp85 replays.</b> Continual Harness solves levels 4&ndash;8 at near-maximum " +
+        "<b><code>lp85</code> replays.</b> Continual Harness solves levels 4&ndash;8 at near-maximum " +
         "credit after refining its policy and saving solver skills; Hermes rebuilds reasoning each " +
         "level and stalls on level 8."
       );
@@ -139,9 +139,9 @@
       return pair(
         V.ch_cn04, "ch", "Continual Harness", "cn04 &middot; 46.4 (5/6)",
         V.he_cn04, "hermes", "Hermes", "cn04 &middot; 4.8 (1/6)",
-        "<b>cn04 replays.</b> After action 228 Continual Harness edits and runs " +
-        "<code>solve_level_4</code>, emitting 47 of the next 50 actions from saved skills; " +
-        "Hermes clears only the first level."
+        "<b><code>cn04</code> replays.</b> Continual Harness solves the later stage by executing skills it learned through trial and error. " +
+        "The key step is <code>solve_level_4</code>, a saved routine that takes over most of the subsequent actions. " +
+        "Hermes clears the first level, but does not turn its exploration into a reusable strategy for the rest of the game."
       );
     },
     "refinement-lift": function () {
@@ -155,30 +155,37 @@
         fig("refinement_lift_lp85.png", "lp85: memory accumulation and skill operation over time") +
         fig("refinement_lift_cn04.png", "cn04: memory accumulation and skill operation over time") +
         "</div>" +
-        '<p class="embed-caption"><b>Memory accumulation and skill operation over time</b> ' +
-        "for <code>lp85</code> (up) and <code>cn04</code> (down).</p>" +
+        '<p class="embed-caption"><b>Memory accumulation and skill operations over time</b> ' +
+        "for <code>lp85</code> (top) and <code>cn04</code> (bottom). " +
+        "<i>Panel (a)</i> tracks the cumulative number of memory entries, most of which record game rules, mechanics, and perception cues. " +
+        "<i>Panel (b)</i> breaks down <code>process_skill</code> add/edit/delete calls between adjacent prompt refinements. " +
+        "Skill categories are assigned from the skill name: " +
+        "<b>analysis</b> for reading or scanning the board, such as finding, detecting, extracting, or probing; " +
+        "<b>solver / planning</b> for computing a plan without acting, such as search, paths, matchings, assemblies, or permutations; and " +
+        "<b>execution / automation</b> for driving the game engine, such as submitting moves, clicking, finishing, or auto-running a level. " +
+        "Skills that both plan and act are counted as execution. " +
+        "Faint dotted vertical lines mark prompt refinements.</p>" +
         "</section>"
       );
     },
     "lp85-policy": function () {
       return (
         '<section class="embed">' +
-        '<div class="iframe-wrap scroll-artifact"><iframe src="artifacts/refinement_lp85.html?v=5" ' +
+        '<div class="iframe-wrap scroll-artifact"><iframe src="artifacts/refinement_lp85.html?v=7" ' +
         'title="lp85 reset-free refinement timeline" loading="lazy" scrolling="yes"></iframe></div>' +
-        '<p class="embed-caption"><b>lp85: refinement compounds across levels.</b> ' +
-        "Each game-over and stagnation becomes a one-line policy rewrite plus an executable " +
-        "skill (level numbers 1-indexed). Once the method is compiled, levels 4&ndash;8 clear " +
-        "at a fraction of the action cost. Scroll inside the artifact to inspect the full trace.</p>" +
+        '<p class="embed-caption"><b>Harness refinement trace of <code>lp85</code>.</b> ' +
+        "The early levels show how the harness builds a working model of the game through refinement. " +
+        "Scroll the cards to follow how the harness state accumulates over time.</p>" +
         "</section>"
       );
     },
     "cn04-behavior": function () {
       return (
         '<section class="embed">' +
-        '<div class="iframe-wrap scroll-artifact"><iframe src="artifacts/refinement_cn04.html?v=5" ' +
+        '<div class="iframe-wrap scroll-artifact"><iframe src="artifacts/refinement_cn04.html?v=6" ' +
         'title="cn04 reset-free refinement timeline" loading="lazy" scrolling="yes"></iframe></div>' +
-        '<p class="embed-caption"><b>cn04: the rule is learned by refinement, then reused.</b> ' +
-        "The real mechanics are pinned down on level 2 (138 actions); levels 3 and 4 then clear " +
+        '<p class="embed-caption"><b>Harness refinement trace of <code>cn04</code>.</b> ' +
+        "The real mechanics are pinned down on level 2 (cost 138 actions); levels 3 and 4 then clear " +
         "in 24 and 47 actions by replaying the learned state instead of re-deriving it. Scroll inside " +
         "the artifact to inspect the full trace.</p>" +
         "</section>"
@@ -214,10 +221,12 @@
       "shared order sorted by Continual Harness final score) across levels (columns). " +
       "Grey cells are levels never reached.",
     "tool_call_distribution.png":
-      "**How each agent spends a tool call.** Tool-call distribution for both agents, " +
-      "normalized to each agent's own total (Continual Harness 7,307 calls; Hermes 18,717). " +
-      "*Left:* the share going to shared functional buckets. *Right:* the same calls in each " +
-      "agent's native tool taxonomy, colored by function. ",
+      "**Tool call distribution across 25 games for Continual Harness (left) and Hermes " +
+      "(right).** Each wedge is one native tool, sized by its share of that agent's tool " +
+      "calls and colored by the function it serves; the key beside each pie lists every tool " +
+      "under its function. Continual Harness spends most calls replaying learned skills " +
+      "(`run_skill`) and on harness edits (`process_skill`, `process_memory`); Hermes spends " +
+      "86% on ephemeral `execute_code`.",
   };
 
   // ---- DOM helpers run after markdown is injected ----

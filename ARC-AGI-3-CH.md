@@ -86,7 +86,7 @@ The main source of Continual Harness’s score advantage comes from action effic
 
 The broader leaderboard comparison reveals the advantage of Continual Harness’s persistent state and self-improving design. OpenClaw gives the model a persistent scratchpad through memory and file tools, but its state remains mostly textual and does not become executable skills or subagents. `A-Evolve` also improves the agent’s workspace across cycles, but with a heavy solve-evolve-reload workflow that results in a higher reported cost.
 
-We then look inside the successful runs to understand where Continual Harness gets its efficiency. We find two design choices that explain most of the gain: reusable skills turn discovered mechanics into efficient execution routines, and reset-free refinement keeps the harness's world model aligned as trajectories grow longer.
+We then look inside the successful runs to understand where Continual Harness gets its efficiency. We find two design choices that explain most of the gain: reusable skills turn discovered mechanics into efficient execution routines, and reset-free refinement improves the harness's world model as trajectories grow longer.
 
 
 ### **Reusable skills turn discovery into efficient execution**
@@ -98,19 +98,19 @@ The Hermes baseline provides an example where useful computation stays transient
 ![tool call distribution](artifacts/figures/tool_call_distribution.png)
 
 
-### **Reset-free refinement keeps the world model aligned**
+### **Reset-free refinement improves the world model**
 
 Reset-free refinement explains why late levels become the primary source of Continual Harness's score gain. After a level-up, game-over or stagnation point, the refiner rereads the raw trajectory, identifies observations that reveal stable game mechanics, and consolidates the learned mechanics into the live decision context. All four components of the surrogate state (system prompt, skills, memory, and subagents) are jointly refined, so that corrected abstractions propagate into execution routines, and the harness assembles a self-contained world model from scattered evidence.
 
 <div data-embed="refinement-lift"></div>
 
-The `lp85` and `cn04` traces show how reset-free refinement keeps the harness state aligned with the game. In `lp85`, game-over and stagnation points become checkpoints for rereading the trajectory, rewriting the prompt, and saving executable skills once a reusable routine is supported by evidence. Rules and mechanics memories accumulate during refinements, and skill operations gradually shift from exploration toward exploitation as the harness gathers a more computable rule model. After the relevant method is compiled into the harness, later levels require much smaller action budgets.
+The `lp85` and `cn04` traces show how reset-free refinement improves the internal world model of the harness. In `lp85`, the game progress is driven by harness refinements at game-over and stagnation points. The memory entries are mainly created by the Refiner at the early stage, suggesting that the game mechanics are primarily learned by rereading the trajectory. As the harness gathers a more computable rule model, skill operations gradually shift from exploration toward exploitation, so that later levels are cleared with much smaller action budgets.
 
 <div data-embed="lp85-policy"></div>
 
 <div data-embed="replay-lp85"></div>
 
-In `cn04`, refinement turns a partial early model into a precise rule that later levels can reuse directly. The memory curve shows steady accumulation of rule and mechanics entries across refinements, while the skill operations remain balanced between analysis, solver planning, and execution. The trace example shows how refinement converts trajectory evidence into lower-cost execution.
+In `cn04`, refinement turns a partial early model into a precise rule that later levels can reuse directly. The memory curve shows steady accumulation of rule and mechanics across refinements, and the skill operations remain balanced between analysis, solver planning, and execution. The trace example shows how refinement converts trajectory evidence into lower-cost execution.
 
 <div data-embed="cn04-behavior"></div>
 
@@ -119,11 +119,11 @@ In `cn04`, refinement turns a partial early model into a precise rule that later
 
 ## What's next
 
-Continual Harness already shows a strong balance between exploration and exploitation on unknown interactive tasks. The next step is to make that balance more reliable. In long-horizon games, weak hypotheses can accumulate into misleading memory, brittle skills, or overconfident prompt updates. Better exploration should therefore focus on evidence quality. Meanwhile, the ability of Continual Harness is dependent on the foundation model. On open-source VLMs, the performance of Continual Harness may not be as good as on frontier closed models.
+Continual Harness shows strong exploration and action efficiency on unknown interactive tasks such as Pokémon and ARC-AGI-3, but we don’t see it as the final form of self-improving agents. The next step is to make the refinement loop more reliable and less model-dependent. 
 
-We see two directions from here. First, exploration should become more disciplined. The Refiner needs better ways to audit evidence, compare competing hypotheses, and decide which trajectory segments are worth turning into memory, skills, or prompt updates.
+In long-horizon tasks, the internal world model of the harness is susceptible to misleading evidence. The Refiner needs better ways to audit evidence and decide which trajectory segments are worth turning into memory, skills, or prompt updates.
 
-Second, the harness should become less dependent on frontier closed models. Continual Harness trajectories may provide training data for open-source VLMs, so that smaller reproducible agents can learn to use memory, skills, and refinement with similar long-horizon discipline.
+Another challenge is generality. Continual Harness works best with strong frontier models. We want to reduce that dependence from both sides. On the harness side, we want a more universal self-improving scaffold that can help weaker models without relying on model-specific behavior. On the model side, the goal is to train open-source models to use and improve the harness well over long horizons. 
 
 
 ## Citation
